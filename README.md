@@ -123,29 +123,22 @@ THREXIA addresses this gap by automating the detection pipeline and presenting f
 
 ## 🛠️ Tech Stack
 
-### Machine Learning & Data
-| Library | Purpose |
-|---|---|
-| `scikit-learn` | Isolation Forest, One-Class SVM, cross-validation, metrics |
-| `pandas` / `numpy` | Data manipulation, preprocessing, feature engineering |
-| `imbalanced-learn` | Handling class imbalance in threat datasets |
-| `matplotlib` / `seaborn` | EDA visualizations, confusion matrices, ROC curves |
-| `joblib` | Model serialization for deployment |
-| `TensorFlow` / `PyTorch` | Optional Autoencoder deep learning model |
-
 ### Backend & Deployment
 | Tool | Purpose |
 |---|---|
 | `Python 3.9+` | Core programming language |
-| `Flask` / `FastAPI` | REST API backend for serving ML predictions |
-| `kagglehub` | Dataset loading and management |
+| `FastAPI` | High-performance REST API for serving ML predictions |
+| `Uvicorn` | ASGI server for production-grade deployment |
 
 ### Frontend & UI
 | Technology | Purpose |
 |---|---|
-| HTML / CSS / JavaScript | Interactive threat dashboard |
-| Responsive Design | Mobile, tablet, desktop compatibility |
-| High-Contrast Mode | Accessibility support |
+| `React 19` | Modern UI library for the intelligence dashboard |
+| `Vite 8` | Next-generation frontend tooling for fast development |
+| `Tailwind CSS` | Utility-first styling with complex glassmorphism effects |
+| `Framer Motion` | Advanced micro-animations and smooth transitions |
+| `Recharts` | Dynamic data visualization for system activity statistics |
+| `Lucide Icons` | Consistent and professional iconography |
 
 ---
 
@@ -214,12 +207,11 @@ OneClassSVM(
 ```
 
 ### Saved Artifacts
-After training, the following files are persisted for backend deployment:
+After training, the following files are persisted and used by the FastAPI backend:
 ```
-models/
-├── model.pkl          # Best trained model (One-Class SVM)
-├── scaler.pkl         # Fitted StandardScaler (prevent data leakage)
-└── feature_cols.pkl   # Feature column list used during training
+backend/models/
+├── threxia_model.joblib   # Best trained model (One-Class SVM)
+└── threxia_scaler.joblib  # Fitted StandardScaler for data normalization
 ```
 
 ---
@@ -271,28 +263,27 @@ models/
 ```
 THREXIA/
 │
-├── 📓 BCS-D-17_THREXIA.ipynb      # Main ML notebook (Phase 2 implementation)
+├── 📓 BCS-D-17_THREXIA.ipynb      # Main ML research and model training
 │
-├── 📂 models/                      # Saved ML artifacts (post-training)
-│   ├── model.pkl
-│   ├── scaler.pkl
-│   └── feature_cols.pkl
+├── 📂 backend/                     # FastAPI Prediction Engine
+│   ├── main.py                     # API endpoints & log simulation
+│   ├── models/                     # Production model artifacts
+│   │   ├── threxia_model.joblib
+│   │   └── threxia_scaler.joblib
+│   └── requirements.txt             # Backend dependencies
 │
-├── 📂 data/                        # Dataset directory (not committed — see Datasets)
-│   └── insider_threat_corporate/
+├── 📂 frontend/                    # React + Vite Intelligence Dashboard
+│   ├── index.html                  # App entry point
+│   ├── src/                         # React components & pages
+│   ├── public/                      # Static assets (logo, icons)
+│   └── package.json                 # Frontend dependencies
 │
-├── 📂 backend/                     # Flask / FastAPI prediction API
-│   └── app.py
+├── 📂 machine_learning/            # Research & Notebooks
 │
-├── 📂 frontend/                    # Web dashboard (HTML/CSS/JS)
-│   ├── index.html
-│   ├── dashboard.html
-│   └── assets/
-│
-├── 📂 docs/                        # Project documentation
+├── 📂 docs_and_design/             # Project documentation & design assets
 │   ├── SRS.docx                    # Software Requirements Specification
-│   ├── SE_Proposal.docx            # HCI Project Proposal
-│   └── Threxia_project_Proposal.docx  # AI Project Proposal
+│   ├── SE_Proposal.pdf             # HCI Project Proposal
+│   └── Threxia project Proposal.pdf # AI Project Proposal
 │
 └── README.md
 ```
@@ -337,40 +328,41 @@ import kagglehub
 kagglehub.login()
 ```
 
-### 4. Run the Notebook
+### 4. Running the Project
 
-Open and run all cells in order:
-
+#### Start Backend
 ```bash
-jupyter notebook BCS-D-17_THREXIA.ipynb
+cd backend
+# Create virtual environment (optional)
+python -m venv venv
+source venv/bin/activate # or venv\Scripts\activate on Windows
+pip install -r requirements.txt
+python main.py
 ```
 
-The notebook will automatically:
-- Download the dataset from Kaggle
-- Detect and map columns
-- Clean and preprocess the data
-- Train both models
-- Evaluate on the hold-out test set
-- Save model artifacts to `/models/`
+#### Start Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
 ---
 
 ## 🌐 Deployment
 
-The trained model artifacts are consumed by a lightweight **Flask / FastAPI** backend that exposes prediction endpoints. The frontend dashboard communicates with this API to serve live threat detection results.
+The trained model artifacts are consumed by a **FastAPI** backend.
 
 ```python
-# Example: Loading saved model for prediction
+# Example: Loading saved model for prediction in backend/main.py
 import joblib
-import numpy as np
 
-model    = joblib.load("models/model.pkl")
-scaler   = joblib.load("models/scaler.pkl")
-features = joblib.load("models/feature_cols.pkl")
+model  = joblib.load("models/threxia_model.joblib")
+scaler = joblib.load("models/threxia_scaler.joblib")
 
-# Preprocess new log entry
-X_new = scaler.transform(new_log_data[features])
-prediction = model.predict(X_new)   # -1 = anomaly, +1 = normal
+# Prediction logic
+scaled_input = scaler.transform(raw_features)
+prediction = model.predict(scaled_input) # -1 = threat, 1 = normal
 ```
 
 **Planned future extensions:**
@@ -408,6 +400,6 @@ prediction = model.predict(X_new)   # -1 = anomaly, +1 = normal
 
 **THREXIA** — *Turning raw logs into actionable intelligence.*
 
-Made with ❤️ at FAST-NU Lahore · 2024–2025
+Made with ❤️ at FAST-NU Lahore · 2025–2026
 
 </div>
