@@ -1,0 +1,14 @@
+is_contractor
+employee_classification
+has_foreign_citizenship
+has_criminal_record
+has_medical_history
+total_printed_pages
+num_printed_pages_off_hours
+total_files_burned
+burned_from_other
+is_abroad
+hostility_country_level
+num_entries
+num_unique_campus
+late_exit_flag
