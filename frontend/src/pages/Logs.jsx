@@ -10,7 +10,10 @@ export default function Logs() {
 
   useEffect(() => {
     const fetchLogs = () => {
-      fetch('http://localhost:8000/api/logs')
+      const token = localStorage.getItem('threxia_auth');
+      fetch('http://localhost:8000/api/logs', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
         .then(res => res.json())
         .then(data => {
           setAllLogs(data);

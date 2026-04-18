@@ -4,13 +4,26 @@ import { Lock, User, ShieldCheck } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
-  const [role, setRole] = useState('analyst');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    localStorage.setItem('threxia_auth', 'active');
-    localStorage.setItem('threxia_role', role);
-    navigate('/dashboard');
+    try {
+      const response = await fetch('http://localhost:8000/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      if (!response.ok) throw new Error('Invalid credentials');
+      const data = await response.json();
+      localStorage.setItem('threxia_auth', data.access_token);
+      localStorage.setItem('threxia_role', data.role);
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   return (
@@ -42,34 +55,19 @@ export default function Login() {
         </div>
         
         <form onSubmit={handleLogin} style={{ maxWidth: '400px', margin: '0 auto' }}>
+          {error && <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
           <div style={{ textAlign: 'left', marginBottom: '1rem' }}>
             <label style={{ fontSize: '0.65rem', color: 'var(--primary-purple)', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
               <User size={11} /> Operator Identifier
             </label>
-            <input type="text" className="login-input" placeholder="Enter credentials..." required defaultValue="admin@threxia.internal" />
-          </div>
-          
-          <div style={{ textAlign: 'left', marginBottom: '1rem' }}>
-            <label style={{ fontSize: '0.65rem', color: 'var(--primary-purple)', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-              <ShieldCheck size={11} /> Access Clearance Level
-            </label>
-            <select 
-              className="login-input" 
-              value={role} 
-              onChange={(e) => setRole(e.target.value)}
-            >
-              <option value="analyst">Security Analyst [L4]</option>
-              <option value="manager">IT Operations Manager [L3]</option>
-              <option value="admin">System Administrator [L5]</option>
-              <option value="researcher">Neural Researcher [L2]</option>
-            </select>
+            <input type="text" className="login-input" placeholder="Enter username..." required value={username} onChange={(e) => setUsername(e.target.value)} />
           </div>
 
           <div style={{ textAlign: 'left', marginBottom: '1.5rem' }}>
             <label style={{ fontSize: '0.65rem', color: 'var(--primary-purple)', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
               <Lock size={11} /> Neural Passcode
             </label>
-            <input type="password" className="login-input" placeholder="••••••••" required defaultValue="password123" />
+            <input type="password" className="login-input" placeholder="••••••••" required value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
           
           <button type="submit" className="btn-primary" style={{ padding: '1rem', fontSize: '0.85rem', letterSpacing: '0.2em' }}>

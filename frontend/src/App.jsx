@@ -8,21 +8,30 @@ import Overview from './pages/Overview';
 import Home from './pages/Home';
 import { LayoutDashboard, FileText, ActivitySquare, BookOpen, Sun, Moon, LogOut } from 'lucide-react';
 
+function PrivateRoute({ children }) {
+  const isAuth = !!localStorage.getItem('threxia_auth');
+  return isAuth ? children : <Navigate to="/login" />;
+}
+
 function Navbar({ toggleTheme, isLight }) {
   const location = useLocation();
   const isAuth = !!localStorage.getItem('threxia_auth');
-  const role = localStorage.getItem('threxia_role') || 'analyst';
+  const role = localStorage.getItem('threxia_role') || 'employee';
 
   // Always show Navbar for Theme Toggle and Public Overview access
 
   const roleConfig = {
-    analyst: { label: 'SA', name: 'Security Analyst', links: ['overview', 'dashboard', 'logs', 'analyze'] },
-    manager: { label: 'IT', name: 'IT Manager', links: ['overview', 'dashboard'] },
-    admin: { label: 'AD', name: 'System Administrator', links: ['overview', 'dashboard', 'logs'] },
-    researcher: { label: 'RS', name: 'Researcher', links: ['overview', 'dashboard', 'analyze'] },
+    employee: { label: 'EMP', name: 'Employee', links: ['overview', 'dashboard', 'logs', 'analyze'] },
+    contractor: { label: 'CTR', name: 'Contractor', links: ['overview', 'dashboard'] },
   };
 
-  const currentRole = roleConfig[role] || roleConfig.analyst;
+  const currentRole = roleConfig[role] || roleConfig.employee;
+
+  const handleLogout = () => {
+    localStorage.removeItem('threxia_auth');
+    localStorage.removeItem('threxia_role');
+    window.location.href = '/login';
+  };
 
   return (
     <nav className="navbar">
@@ -99,11 +108,6 @@ function Navbar({ toggleTheme, isLight }) {
     </nav>
   );
 }
-
-const PrivateRoute = ({ children }) => {
-  const isAuth = localStorage.getItem('threxia_auth');
-  return isAuth ? children : <Navigate to="/" replace />;
-};
 
 export default function App() {
   const [isLight, setIsLight] = useState(false);

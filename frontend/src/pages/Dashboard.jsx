@@ -8,12 +8,18 @@ export default function Dashboard() {
     total_logs: 0,
     total_anomalies: 0,
     chart_data: [],
-    latest_alerts: []
+    latest_alerts: [],
+    user: {}
   });
+
+  const role = localStorage.getItem('threxia_role') || 'employee';
 
   useEffect(() => {
     const fetchState = () => {
-      fetch('http://localhost:8000/api/dashboard')
+      const token = localStorage.getItem('threxia_auth');
+      fetch('http://localhost:8000/api/dashboard', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
         .then(res => res.json())
         .then(data => setState(data))
         .catch(err => console.error(err));
@@ -28,7 +34,7 @@ export default function Dashboard() {
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">Threat Intelligence Dashboard</h1>
+        <h1 className="page-title">Threat Intelligence Dashboard {role === 'contractor' ? '(Contractor View)' : ''}</h1>
         <p className="page-subtitle">Real-time monitoring of user behaviour and system activity anomalies.</p>
       </div>
 
@@ -75,32 +81,34 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Live Threat Feed */}
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', height: '480px' }}>
-          <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
-            <ShieldAlert size={16} color="var(--danger-red)" />
-            Recent Security Incidents
-          </div>
-          
-          <div style={{ paddingRight: '0.5rem', flex: 1, overflowY: 'auto', minHeight: 0 }}>
-            {state.latest_alerts.length === 0 ? (
-              <div style={{ color: 'var(--text-secondary)', textAlign: 'center', marginTop: '3rem' }}>No recent threats detected.</div>
-            ) : (
-              state.latest_alerts.map((alert, idx) => (
-                <div key={idx} className="alert-item">
-                  <div className="alert-header">
-                    <div className="alert-user">{alert.user}</div>
-                    <div className="alert-time">{alert.time.split(' ')[1]}</div>
+        {/* Live Threat Feed - Only for employees */}
+        {role === 'employee' && (
+          <div className="card" style={{ display: 'flex', flexDirection: 'column', height: '480px' }}>
+            <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+              <ShieldAlert size={16} color="var(--danger-red)" />
+              Recent Security Incidents
+            </div>
+            
+            <div style={{ paddingRight: '0.5rem', flex: 1, overflowY: 'auto', minHeight: 0 }}>
+              {state.latest_alerts.length === 0 ? (
+                <div style={{ color: 'var(--text-secondary)', textAlign: 'center', marginTop: '3rem' }}>No recent threats detected.</div>
+              ) : (
+                state.latest_alerts.map((alert, idx) => (
+                  <div key={idx} className="alert-item">
+                    <div className="alert-header">
+                      <div className="alert-user">{alert.user}</div>
+                      <div className="alert-time">{alert.time.split(' ')[1]}</div>
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>ID: {alert.id} • AI Confidence: {alert.confidence_score}%</div>
+                    {alert.explanations.map((exp, i) => (
+                      <div key={i} className="alert-desc">{exp}</div>
+                    ))}
                   </div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>ID: {alert.id} • AI Confidence: {alert.confidence_score}%</div>
-                  {alert.explanations.map((exp, i) => (
-                    <div key={i} className="alert-desc">{exp}</div>
-                  ))}
-                </div>
-              ))
-            )}
+                ))
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
-from fastapi import FastAPI, BackgroundTasks
+from fastapi import FastAPI, BackgroundTasks, HTTPException, Depends, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 import joblib
 import numpy as np
@@ -7,6 +8,10 @@ import os
 import random
 from datetime import datetime, timedelta
 import asyncio
+import jwt
+from passlib.context import CryptContext
+import csv
+from io import StringIO
 
 app = FastAPI(title="THREXIA AI Threat Intelligence")
 
@@ -17,6 +22,43 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# --- Security ---
+SECRET_KEY = "your-secret-key-here"
+ALGORITHM = "HS256"
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+security = HTTPBearer()
+
+# --- Users Database ---
+users_db = {
+    "Emp_John": {"password": pwd_context.hash("password123"), "role": "employee"},
+    "Emp_Sarah": {"password": pwd_context.hash("password123"), "role": "employee"},
+    "Emp_Michael": {"password": pwd_context.hash("password123"), "role": "employee"},
+    "Contractor_Alex": {"password": pwd_context.hash("password123"), "role": "contractor"},
+}
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+def create_access_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(minutes=30)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    try:
+        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        role: str = payload.get("role")
+        if username is None or role is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return {"username": username, "role": role}
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+# --- ML Loading ---
 
 # --- ML Loading ---
 # Load the real ML models (they have been moved to the models/ subdirectory)
@@ -34,7 +76,7 @@ state = {
     "total_logs_analyzed": 5420,
     "total_anomalies": 0,
     "system_activity_chart": [], # Replaces "chart_data" for clarity
-    "users": ["Emp_John", "Emp_Sarah", "Emp_Michael", "Contractor_Alex"],
+    "users": list(users_db.keys()),
     "live_alerts": [],
     "all_logs": [] # Full audit trail (last 100 entries)
 }
@@ -174,25 +216,44 @@ async def event_stream_simulator():
 async def startup_event():
     asyncio.create_task(event_stream_simulator())
 
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+@app.post("/api/login")
+def login(request: LoginRequest):
+    user = users_db.get(request.username)
+    if not user or not verify_password(request.password, user["password"]):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    access_token = create_access_token(data={"sub": request.username, "role": user["role"]})
+    return {"access_token": access_token, "token_type": "bearer", "role": user["role"]}
+
 @app.get("/api/dashboard")
-def get_dashboard_data():
+def get_dashboard_data(current_user: dict = Depends(verify_token)):
     return {
         "status": "Running AI Model" if model else "Model Offline",
         "total_logs": state["total_logs_analyzed"],
         "total_anomalies": state["total_anomalies"],
         "chart_data": state["system_activity_chart"],
-        "latest_alerts": state["live_alerts"][:5] # Send only the 5 most recent for the dashboard feed
+        "latest_alerts": state["live_alerts"][:5], # Send only the 5 most recent for the dashboard feed
+        "user": current_user
     }
     
 @app.get("/api/logs")
-def get_all_logs():
+def get_all_logs(current_user: dict = Depends(verify_token)):
+    if current_user["role"] == "contractor":
+        # Contractors see only their own logs or limited
+        user_logs = [log for log in state["all_logs"] if log["user"] == current_user["username"]]
+        return user_logs[:20]  # Limited
     return state["all_logs"]
 
 class ManualLog(BaseModel):
     features: list[float]
 
 @app.post("/api/analyze_manual")
-def analyze_manual_log(log: ManualLog):
+def analyze_manual_log(log: ManualLog, current_user: dict = Depends(verify_token)):
+    if current_user["role"] != "employee":
+        raise HTTPException(status_code=403, detail="Access denied")
     if not model or not scaler:
         return {"error": "Model offline"}
     
@@ -215,3 +276,101 @@ def analyze_manual_log(log: ManualLog):
         }
     except Exception as e:
         return {"error": str(e)}
+
+@app.post("/api/upload_csv")
+async def upload_csv(file: UploadFile = File(...), current_user: dict = Depends(verify_token)):
+    if current_user["role"] != "employee":
+        raise HTTPException(status_code=403, detail="Access denied")
+    if not model or not scaler:
+        return {"error": "Model offline"}
+    
+    try:
+        # Read the uploaded file
+        contents = await file.read()
+        csv_data = contents.decode('utf-8')
+        csv_reader = csv.reader(StringIO(csv_data))
+        
+        results = []
+        headers = None
+        
+        for row_idx, row in enumerate(csv_reader):
+            # Skip header row if it exists
+            if row_idx == 0:
+                headers = row
+                # Check if first row looks like a header (contains non-numeric values)
+                try:
+                    [float(x) for x in row]
+                except ValueError:
+                    # This is a header, skip it
+                    continue
+            
+            # Try to parse row as features
+            try:
+                features = [float(x.strip()) for x in row if x.strip()]
+                
+                # Ensure we have exactly 14 features
+                if len(features) != 14:
+                    results.append({
+                        "row": row_idx,
+                        "error": f"Expected 14 features, got {len(features)}"
+                    })
+                    continue
+                
+                # Run prediction
+                input_arr = np.array(features).reshape(1, -1)
+                scaled = scaler.transform(input_arr)
+                prediction = int(model.predict(scaled)[0])
+                raw_score = model.score_samples(scaled)[0]
+                
+                if prediction == -1:
+                    base_conf = 85.0 + abs(raw_score) * 0.5 + random.uniform(0, 5)
+                    confidence = min(99.9, base_conf)
+                else:
+                    confidence = min(99.9, max(50.0, (raw_score / 350.0) * 100))
+                
+                explanations = interpret_anomaly(features) if prediction == -1 else ["Behavior falls within normal operational parameters."]
+                
+                results.append({
+                    "row": row_idx,
+                    "features": features,
+                    "prediction": "Threat" if prediction == -1 else "Normal",
+                    "confidence": round(confidence, 1),
+                    "explanations": explanations
+                })
+            except ValueError as e:
+                results.append({
+                    "row": row_idx,
+                    "error": f"Invalid numeric data: {str(e)}"
+                })
+        
+        return {
+            "filename": file.filename,
+            "rows_processed": len(results),
+            "results": results
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/api/download_csv_template")
+def download_csv_template(current_user: dict = Depends(verify_token)):
+    """Returns a CSV template with sample data"""
+    if current_user["role"] != "employee":
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Sample template with 5 rows
+    template_data = [
+        ["contractor", "emp_class", "foreign", "criminal", "medical", "printed", "off_hours", "burned", "burned_other", "abroad", "hostility", "entries", "campus", "late"],
+        ["0", "1", "0", "0", "0", "5", "0", "0", "0", "0", "0", "2", "1", "0"],  # Normal
+        ["0", "2", "0", "0", "0", "8", "0", "0", "0", "0", "0", "3", "1", "0"],  # Normal
+        ["1", "3", "0", "0", "0", "500", "50", "45", "0", "0", "2", "40", "2", "1"],  # Anomaly
+        ["0", "1", "0", "0", "0", "150", "30", "20", "0", "0", "1", "25", "1", "1"],  # Anomaly
+    ]
+    
+    csv_output = StringIO()
+    writer = csv.writer(csv_output)
+    writer.writerows(template_data)
+    
+    return {
+        "template": csv_output.getvalue(),
+        "filename": "threxia_template.csv"
+    }
