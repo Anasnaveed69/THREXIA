@@ -2,7 +2,7 @@ import { Info, Target, Users, Shield } from 'lucide-react';
 
 export default function Overview() {
   const role = localStorage.getItem('threxia_role') || 'analyst';
-  
+
   const roleNames = {
     analyst: 'Security Analyst',
     manager: 'IT Manager',
@@ -24,14 +24,14 @@ export default function Overview() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
-        
+
         {/* Problem Definition */}
         <div className="card">
           <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1rem', marginBottom: '1.5rem', color: 'var(--text-strong)' }}>
             <Info size={20} color="var(--primary-purple)" />
             1. Problem Definition
           </div>
-          
+
           <div style={{ color: 'var(--text-secondary)', lineHeight: '1.7', fontSize: '0.95rem' }}>
             <p style={{ marginBottom: '1rem' }}>
               Modern organizations generate massive amounts of system logs from user activities such as logins, file access, device usage, and network activity. Manually monitoring these logs to detect suspicious behaviour is difficult and time-consuming for security analysts. Traditional enterprise tools often have complex interfaces and steep learning curves, making them difficult for students and beginners to understand.
@@ -51,7 +51,7 @@ export default function Overview() {
             <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6', fontSize: '0.9rem' }}>
               The project belongs to the cybersecurity and user behaviour analytics (UEBA) domain. It focuses on detecting insider threats and abnormal system activities using advanced machine learning techniques.
             </p>
-            
+
             <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, color: 'var(--primary-blue)', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
                 <Target size={14} /> Ultimate Goal
@@ -67,7 +67,7 @@ export default function Overview() {
             <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Users size={16} /> Primary Stakeholders
             </div>
-            
+
             <ul style={{ color: 'var(--text-secondary)', lineHeight: '1.8', fontSize: '0.9rem', paddingLeft: '1.5rem', marginTop: '1rem' }}>
               <li><strong style={{ color: 'var(--text-strong)' }}>Security Analysts</strong> who monitor and investigate suspicious activities.</li>
               <li><strong style={{ color: 'var(--text-strong)' }}>System Administrators</strong> who manage system access and user permissions.</li>
@@ -76,7 +76,7 @@ export default function Overview() {
             </ul>
           </div>
         </div>
-        
+
       </div>
     </div>
   );
