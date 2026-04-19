@@ -197,7 +197,8 @@ async def event_stream_simulator():
                 "confidence_score": round(confidence, 1),
                 "explanations": explanations,
                 "type": "threat" if is_threat else "safe",
-                "status": "Suspicious" if is_threat else "Normal"
+                "status": "Suspicious" if is_threat else "Normal",
+                "features": features
             }
             
             # Add to full audit trail

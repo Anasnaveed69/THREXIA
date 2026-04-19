@@ -1,12 +1,32 @@
-import { useState, useEffect } from 'react';
-import { AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { AlertCircle, ChevronDown, ChevronUp, Radio, Activity, Terminal } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import StarBorder from '../components/StarBorder';
 
 export default function Logs() {
   const [allLogs, setAllLogs] = useState([]);
   const [filter, setFilter] = useState('all'); // all, threat, safe
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [expandedId, setExpandedId] = useState(null);
   const itemsPerPage = 50;
+
+  const FEATURE_LABELS = [
+    { label: "Contractor Status", icon: <Radio size={12} /> },
+    { label: "Employee Class", icon: <Activity size={12} /> },
+    { label: "Foreign National", icon: <Radio size={12} /> },
+    { label: "Criminal Record", icon: <AlertCircle size={12} /> },
+    { label: "Medical History", icon: <Activity size={12} /> },
+    { label: "Docs Printed", icon: <Terminal size={12} /> },
+    { label: "Off-hours Printing", icon: <Terminal size={12} /> },
+    { label: "USB Transfer", icon: <Terminal size={12} /> },
+    { label: "Other Media", icon: <Terminal size={12} /> },
+    { label: "Travel Abroad", icon: <Activity size={12} /> },
+    { label: "Hostility Index", icon: <AlertCircle size={12} /> },
+    { label: "Access Frequency", icon: <Activity size={12} /> },
+    { label: "Location Count", icon: <Radio size={12} /> },
+    { label: "Late Night Access", icon: <Radio size={12} /> }
+  ];
 
   useEffect(() => {
     const fetchLogs = () => {
@@ -49,32 +69,32 @@ export default function Logs() {
         <p className="page-subtitle">A real-time registry of system baseline activity and detected anomalies.</p>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+      <div className="logs-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', gap: '1rem', flexWrap: 'wrap' }}>
         {/* Filter Navigation Bar */}
-        <div style={{ display: 'flex', gap: '1rem', background: 'var(--panel-bg)', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--border-color)', backdropFilter: 'blur(10px)' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', background: 'var(--panel-bg)', padding: '0.4rem', borderRadius: '8px', border: '1px solid var(--border-color)', backdropFilter: 'blur(10px)', flex: '1', minWidth: '280px' }}>
           <button
             onClick={() => setFilter('all')}
-            style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: filter === 'all' ? 'var(--primary-purple)' : 'transparent', color: filter === 'all' ? 'white' : 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, transition: '0.3s' }}
+            style={{ flex: 1, padding: '0.5rem', borderRadius: '4px', border: 'none', background: filter === 'all' ? 'var(--primary-purple)' : 'transparent', color: filter === 'all' ? 'white' : 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 600, transition: '0.3s' }}
           >
             ALL
           </button>
           <button
             onClick={() => setFilter('threat')}
-            style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: filter === 'threat' ? 'var(--danger-red)' : 'transparent', color: filter === 'threat' ? 'white' : 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, transition: '0.3s' }}
+            style={{ flex: 1, padding: '0.5rem', borderRadius: '4px', border: 'none', background: filter === 'threat' ? 'var(--danger-red)' : 'transparent', color: filter === 'threat' ? 'white' : 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 600, transition: '0.3s' }}
           >
             THREATS
           </button>
           <button
             onClick={() => setFilter('safe')}
-            style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: filter === 'safe' ? 'var(--success-green)' : 'transparent', color: filter === 'safe' ? 'white' : 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, transition: '0.3s' }}
+            style={{ flex: 1, padding: '0.5rem', borderRadius: '4px', border: 'none', background: filter === 'safe' ? 'var(--success-green)' : 'transparent', color: filter === 'safe' ? 'white' : 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 600, transition: '0.3s' }}
           >
             SAFE
           </button>
         </div>
 
         {/* Top Info */}
-        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', letterSpacing: '0.05em' }}>
-          SHOWING {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredLogs.length)} OF {filteredLogs.length} ENTRIES
+        <div className="logs-info" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', letterSpacing: '0.05em', fontWeight: 500 }}>
+          {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredLogs.length)} OF {filteredLogs.length} ENTRIES
         </div>
       </div>
 
@@ -85,21 +105,37 @@ export default function Logs() {
           <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>No records found in this category.</div>
         ) : (
           <>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>TIME STAMP</th>
-                  <th>INCIDENT ID</th>
-                  <th>ENTITY PROFILE</th>
-                  <th>AI CONFIDENCE</th>
-                  <th>BEHAVIORAL AUDIT</th>
-                  <th>STATUS</th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentItems.map((log, idx) => (
-                  <tr key={idx} style={{ opacity: log.type === 'safe' ? 0.8 : 1 }}>
-                    <td style={{ color: 'var(--text-secondary)' }}>{log.time}</td>
+        <div className="data-table-container">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>TIME STAMP</th>
+                <th>INCIDENT ID</th>
+                <th>ENTITY PROFILE</th>
+                <th>AI CONFIDENCE</th>
+                <th>BEHAVIORAL AUDIT</th>
+                <th>STATUS</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentItems.map((log, idx) => (
+                <React.Fragment key={idx}>
+                  <tr 
+                    onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}
+                    style={{ 
+                      opacity: log.type === 'safe' ? 0.8 : 1, 
+                      cursor: 'pointer',
+                      background: expandedId === log.id ? 'rgba(139, 92, 246, 0.05)' : 'transparent',
+                      transition: '0.2s'
+                    }}
+                    className="log-row"
+                  >
+                    <td style={{ color: 'var(--text-secondary)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        {expandedId === log.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                        {log.time}
+                      </div>
+                    </td>
                     <td style={{ fontWeight: 600, color: log.type === 'threat' ? 'var(--danger-red)' : 'var(--primary-blue)' }}>{log.id}</td>
                     <td>{log.user}</td>
                     <td>
@@ -135,29 +171,142 @@ export default function Logs() {
                       </span>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                  
+                  <AnimatePresence>
+                    {expandedId === log.id && (
+                      <tr className="desktop-expanded-row">
+                        <td colSpan="6" style={{ padding: 0, borderBottom: '1px solid var(--border-color)' }}>
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.3, ease: "easeInOut" }}
+                            style={{ overflow: 'hidden', background: 'rgba(0,0,0,0.2)' }}
+                          >
+                            <div style={{ padding: '1.5rem 2rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem', color: 'var(--primary-purple)', fontSize: '0.85rem', fontWeight: 600, letterSpacing: '0.1em' }}>
+                                <Activity size={16} /> BEHAVIORAL PATTERN ANALYSIS
+                              </div>
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
+                                {log.features && log.features.map((val, fIdx) => (
+                                  <div 
+                                    key={fIdx} 
+                                    style={{ 
+                                      padding: '0.75rem', 
+                                      borderRadius: '6px', 
+                                      background: 'rgba(255,255,255,0.02)', 
+                                      border: '1px solid rgba(255,255,255,0.05)',
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      gap: '0.25rem'
+                                    }}
+                                  >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-secondary)', fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase' }}>
+                                      {FEATURE_LABELS[fIdx]?.icon}
+                                      {FEATURE_LABELS[fIdx]?.label}
+                                    </div>
+                                    <div style={{ fontSize: '1.1rem', fontWeight: 700, color: (val > 0 && [3,6,7,10,13].includes(fIdx)) || (val > 10 && [5,11].includes(fIdx)) ? 'var(--danger-red)' : 'var(--text-strong)' }}>
+                                      {val}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                              <div style={{ marginTop: '1.5rem', fontSize: '0.8rem', color: 'var(--text-secondary)', fontStyle: 'italic', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem' }}>
+                                * Highlighted values indicate deviations from established user baseline.
+                              </div>
+                            </div>
+                          </motion.div>
+                        </td>
+                      </tr>
+                    )}
+                  </AnimatePresence>
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mobile-log-list">
+          {currentItems.map((log, idx) => (
+            <div key={idx} className={`log-card ${expandedId === log.id ? 'expanded' : ''}`} onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}>
+              <div className="log-card-accent" style={{ background: log.type === 'threat' ? 'var(--danger-red)' : 'var(--success-green)' }}></div>
+              <div className="log-card-header">
+                <div className="log-card-id" style={{ color: log.type === 'threat' ? 'var(--danger-red)' : 'var(--primary-blue)' }}>{log.id}</div>
+                <div className="log-card-time">{log.time}</div>
+              </div>
+              <div className="log-card-body">
+                <div>
+                  <div className="log-card-label">User</div>
+                  <div className="log-card-value">{log.user}</div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div className="log-card-label">Confidence</div>
+                  <div className="log-card-value">{log.confidence_score}%</div>
+                </div>
+              </div>
+              <div style={{ marginBottom: '1rem' }}>
+                <span className={`badge ${log.type === 'threat' ? 'badge-danger' : ''}`} style={{
+                  backgroundColor: log.type === 'safe' ? 'var(--success-green)' : '',
+                  color: log.type === 'safe' ? 'white' : '',
+                  border: log.type === 'safe' ? 'none' : ''
+                }}>
+                  {log.status}
+                </span>
+              </div>
+
+              <AnimatePresence>
+                {expandedId === log.id && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    style={{ overflow: 'hidden', borderTop: '1px solid var(--border-color)', marginTop: '0.5rem', paddingTop: '1rem' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: 'var(--primary-purple)', fontSize: '0.75rem', fontWeight: 600 }}>
+                      <Activity size={14} /> PATTERN ANALYSIS
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+                      {log.features && log.features.map((val, fIdx) => (
+                        <div key={fIdx} style={{ padding: '0.4rem', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '4px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '0.55rem', color: 'rgba(148, 163, 184, 0.6)', textTransform: 'uppercase', marginBottom: '0.1rem', fontWeight: 700 }}>{FEATURE_LABELS[fIdx]?.label}</div>
+                          <div style={{ fontSize: '0.85rem', fontWeight: 800, color: (val > 0 && [3,6,7,10,13].includes(fIdx)) || (val > 10 && [5,11].includes(fIdx)) ? 'var(--danger-red)' : 'var(--text-strong)' }}>{val}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '0.5rem' }}>
+                {expandedId === log.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              </div>
+            </div>
+          ))}
+        </div>
 
             {/* Pagination Footer */}
             <div style={{ padding: '1.25rem', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'center', gap: '1rem', background: 'rgba(0,0,0,0.2)' }}>
-              <button
+              <StarBorder
+                as="button"
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(p => p - 1)}
-                style={{ padding: '0.6rem 1.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'transparent', color: currentPage === 1 ? 'rgba(255,255,255,0.1)' : 'white', cursor: currentPage === 1 ? 'default' : 'pointer', fontSize: '0.75rem', fontWeight: 700, transition: '0.3s' }}
+                color="rgba(255,255,255,0.4)"
+                innerStyle={{ padding: '0.6rem 1.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'transparent', color: currentPage === 1 ? 'rgba(255,255,255,0.1)' : 'white', cursor: currentPage === 1 ? 'default' : 'pointer', fontSize: '0.75rem', fontWeight: 700, transition: '0.3s' }}
               >
                 PREVIOUS
-              </button>
+              </StarBorder>
               <div style={{ display: 'flex', alignItems: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600, letterSpacing: '0.1em' }}>
                 PAGE {currentPage} OF {totalPages || 1}
               </div>
-              <button
+              <StarBorder
+                as="button"
                 disabled={currentPage === totalPages || totalPages === 0}
                 onClick={() => setCurrentPage(p => p + 1)}
-                style={{ padding: '0.6rem 1.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'transparent', color: (currentPage === totalPages || totalPages === 0) ? 'rgba(255,255,255,0.1)' : 'white', cursor: (currentPage === totalPages || totalPages === 0) ? 'default' : 'pointer', fontSize: '0.75rem', fontWeight: 700, transition: '0.3s' }}
+                color="rgba(255,255,255,0.4)"
+                innerStyle={{ padding: '0.6rem 1.5rem', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'transparent', color: (currentPage === totalPages || totalPages === 0) ? 'rgba(255,255,255,0.1)' : 'white', cursor: (currentPage === totalPages || totalPages === 0) ? 'default' : 'pointer', fontSize: '0.75rem', fontWeight: 700, transition: '0.3s' }}
               >
                 NEXT
-              </button>
+              </StarBorder>
             </div>
           </>
         )}

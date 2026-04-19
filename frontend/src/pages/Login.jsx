@@ -30,21 +30,21 @@ export default function Login() {
     <div className="login-bg">
       <div className="login-box">
         <div className="cyber-status">NEURAL LINK: ESTABLISHED // ENCRYPTION: ACTIVE</div>
-        
+
         <div style={{ textAlign: 'center', marginBottom: '1.5rem', position: 'relative' }}>
           <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '80px', height: '80px', background: 'radial-gradient(circle, var(--primary-purple) 0%, transparent 70%)', opacity: 0.3, zIndex: 0 }}></div>
-          <img 
-            src="/logo.png" 
-            alt="THREXIA Logo" 
-            style={{ 
-              width: '72px', 
-              height: '72px', 
-              objectFit: 'contain', 
-              marginBottom: '1rem', 
+          <img
+            src="/logo.png"
+            alt="THREXIA Logo"
+            style={{
+              width: '72px',
+              height: '72px',
+              objectFit: 'contain',
+              marginBottom: '1rem',
               filter: 'drop-shadow(0 0 15px var(--primary-glow)) drop-shadow(0 0 5px var(--primary-glow))',
               position: 'relative',
               zIndex: 1
-            }} 
+            }}
           />
           <h1 style={{ fontSize: '2.5rem', fontWeight: 800, letterSpacing: '0.25em', color: 'var(--text-strong)', textShadow: '0 0 20px var(--primary-glow)', margin: 0 }}>THREXIA</h1>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
@@ -53,7 +53,7 @@ export default function Login() {
             <div style={{ width: '30px', height: '1px', background: 'var(--primary-purple)' }}></div>
           </div>
         </div>
-        
+
         <form onSubmit={handleLogin} style={{ maxWidth: '400px', margin: '0 auto' }}>
           {error && <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
           <div style={{ textAlign: 'left', marginBottom: '1rem' }}>
@@ -69,7 +69,7 @@ export default function Login() {
             </label>
             <input type="password" className="login-input" placeholder="••••••••" required value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
-          
+
           <button type="submit" className="btn-primary" style={{ padding: '1rem', fontSize: '0.85rem', letterSpacing: '0.2em' }}>
             INITIALIZE ENCRYPTED UPLINK
           </button>

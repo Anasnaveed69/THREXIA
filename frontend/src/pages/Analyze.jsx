@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Activity, ShieldAlert, ShieldCheck, Upload } from 'lucide-react';
+import StarBorder from '../components/StarBorder';
 
 export default function Analyze() {
   const [features, setFeatures] = useState(
@@ -137,36 +138,38 @@ export default function Analyze() {
       </div>
 
       {/* Tab Navigation */}
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+      <div style={{ display: 'flex', gap: '1rem', background: 'var(--panel-bg)', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--border-color)', backdropFilter: 'blur(10px)', width: 'fit-content', marginBottom: '2rem' }}>
         <button 
           onClick={() => setActiveTab('manual')}
           style={{ 
-            padding: '0.75rem 1.5rem', 
-            background: activeTab === 'manual' ? 'var(--primary-purple)' : 'transparent',
-            border: 'none',
-            color: activeTab === 'manual' ? 'white' : 'var(--text-secondary)',
-            cursor: 'pointer',
-            borderBottom: activeTab === 'manual' ? '2px solid var(--primary-purple)' : 'none',
-            fontSize: '0.9rem',
-            fontWeight: 500
+            padding: '0.5rem 1.25rem', 
+            borderRadius: '4px', 
+            border: 'none', 
+            background: activeTab === 'manual' ? 'var(--primary-purple)' : 'transparent', 
+            color: activeTab === 'manual' ? 'white' : 'var(--text-secondary)', 
+            cursor: 'pointer', 
+            fontSize: '0.75rem', 
+            fontWeight: 600, 
+            transition: '0.3s' 
           }}
         >
-          Manual Entry
+          MANUAL ENTRY
         </button>
         <button 
           onClick={() => setActiveTab('csv')}
           style={{ 
-            padding: '0.75rem 1.5rem', 
-            background: activeTab === 'csv' ? 'var(--primary-purple)' : 'transparent',
-            border: 'none',
-            color: activeTab === 'csv' ? 'white' : 'var(--text-secondary)',
-            cursor: 'pointer',
-            borderBottom: activeTab === 'csv' ? '2px solid var(--primary-purple)' : 'none',
-            fontSize: '0.9rem',
-            fontWeight: 500
+            padding: '0.5rem 1.25rem', 
+            borderRadius: '4px', 
+            border: 'none', 
+            background: activeTab === 'csv' ? 'var(--primary-purple)' : 'transparent', 
+            color: activeTab === 'csv' ? 'white' : 'var(--text-secondary)', 
+            cursor: 'pointer', 
+            fontSize: '0.75rem', 
+            fontWeight: 600, 
+            transition: '0.3s' 
           }}
         >
-          CSV Upload
+          CSV UPLOAD
         </button>
       </div>
 
@@ -196,13 +199,13 @@ export default function Analyze() {
               />
               
               <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
-                <button type="submit" className="btn-primary" style={{ width: 'auto', padding: '0.75rem 2rem' }}>
+                <StarBorder as="button" type="submit" innerClassName="btn-primary" color="var(--primary-glow)" speed="4s" innerStyle={{ width: 'auto', padding: '0.75rem 2rem' }}>
                   {loading ? "ANALYZING..." : "ANALYZE LOG"}
-                </button>
+                </StarBorder>
                 
-                <button type="button" onClick={() => setFeatures("1, 3, 0, 0, 0, 500, 50, 45, 0, 0, 2, 40, 2, 1")} className="btn-primary" style={{ width: 'auto', padding: '0.75rem 2rem', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', boxShadow: 'none' }}>
+                <StarBorder as="button" type="button" onClick={() => setFeatures("1, 3, 0, 0, 0, 500, 50, 45, 0, 0, 2, 40, 2, 1")} innerClassName="btn-primary" color="rgba(255,255,255,0.4)" innerStyle={{ width: 'auto', padding: '0.75rem 2rem', background: 'var(--panel-bg)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', boxShadow: 'none' }}>
                   Load Anomaly Preset
-                </button>
+                </StarBorder>
               </div>
             </form>
           </div>
@@ -289,17 +292,19 @@ export default function Analyze() {
               )}
               
               <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                <button type="submit" className="btn-primary" style={{ width: 'auto', padding: '0.75rem 2rem' }}>
+                <StarBorder as="button" type="submit" innerClassName="btn-primary" color="var(--primary-glow)" speed="4s" innerStyle={{ width: 'auto', padding: '0.75rem 2rem' }}>
                   {loading ? "UPLOADING..." : "UPLOAD & ANALYZE"}
-                </button>
-                <button 
+                </StarBorder>
+                <StarBorder 
+                  as="button"
                   type="button" 
                   onClick={handleDownloadTemplate} 
-                  className="btn-primary" 
-                  style={{ width: 'auto', padding: '0.75rem 2rem', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', boxShadow: 'none' }}
+                  innerClassName="btn-primary" 
+                  color="rgba(255,255,255,0.4)"
+                  innerStyle={{ width: 'auto', padding: '0.75rem 2rem', background: 'var(--panel-bg)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', boxShadow: 'none' }}
                 >
                   Download Template
-                </button>
+                </StarBorder>
               </div>
             </form>
           </div>
@@ -336,7 +341,7 @@ export default function Analyze() {
                     Download Results as CSV
                   </button>
 
-                  <div style={{ overflowX: 'auto' }}>
+                  <div className="data-table-container">
                     <table style={{ width: '100%', fontSize: '0.8rem', borderCollapse: 'collapse' }}>
                       <thead>
                         <tr style={{ borderBottom: '1px solid var(--border-color)' }}>

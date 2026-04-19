@@ -1,0 +1,69 @@
+.star-border-container {
+  display: inline-block;
+  position: relative;
+  border-radius: 6px; /* Match THREXIA 4px-8px border radii */
+  overflow: hidden;
+  cursor: pointer;
+  text-decoration: none;
+  border: none;
+  background: rgba(255, 255, 255, 0.05); /* very subtle base for the track */
+}
+
+.border-gradient-bottom {
+  position: absolute;
+  width: 300%;
+  height: 50%;
+  opacity: 0.8;
+  bottom: -12px;
+  right: -250%;
+  border-radius: 50%;
+  animation: star-movement-bottom linear infinite alternate;
+  z-index: 0;
+}
+
+.border-gradient-top {
+  position: absolute;
+  opacity: 0.8;
+  width: 300%;
+  height: 50%;
+  top: -12px;
+  left: -250%;
+  border-radius: 50%;
+  animation: star-movement-top linear infinite alternate;
+  z-index: 0;
+}
+
+.inner-content {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px; /* Slightly less than container to fit inside the 1px track */
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+}
+
+/* Let the innerClassName govern the exact padding/typography by overriding or combining */
+
+@keyframes star-movement-bottom {
+  0% {
+    transform: translate(0%, 0%);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-100%, 0%);
+    opacity: 0;
+  }
+}
+
+@keyframes star-movement-top {
+  0% {
+    transform: translate(0%, 0%);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(100%, 0%);
+    opacity: 0;
+  }
+}

@@ -6,7 +6,8 @@ import Logs from './pages/Logs';
 import Analyze from './pages/Analyze';
 import Overview from './pages/Overview';
 import Home from './pages/Home';
-import { LayoutDashboard, FileText, ActivitySquare, BookOpen, Sun, Moon, LogOut } from 'lucide-react';
+import { LayoutDashboard, FileText, ActivitySquare, BookOpen, Sun, Moon, LogOut, Menu, X } from 'lucide-react';
+import StarBorder from './components/StarBorder';
 
 function PrivateRoute({ children }) {
   const isAuth = !!localStorage.getItem('threxia_auth');
@@ -17,8 +18,7 @@ function Navbar({ toggleTheme, isLight }) {
   const location = useLocation();
   const isAuth = !!localStorage.getItem('threxia_auth');
   const role = localStorage.getItem('threxia_role') || 'employee';
-
-  // Always show Navbar for Theme Toggle and Public Overview access
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const roleConfig = {
     employee: { label: 'EMP', name: 'Employee', links: ['overview', 'dashboard', 'logs', 'analyze'] },
@@ -27,53 +27,73 @@ function Navbar({ toggleTheme, isLight }) {
 
   const currentRole = roleConfig[role] || roleConfig.employee;
 
-  const handleLogout = () => {
-    localStorage.removeItem('threxia_auth');
-    localStorage.removeItem('threxia_role');
-    window.location.href = '/login';
-  };
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const closeMenu = () => setIsMenuOpen(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (isMenuOpen) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isMenuOpen]);
 
   return (
-    <nav className="navbar">
-      <Link to="/" className="brand" style={{ textDecoration: 'none' }}>
-        <img 
-          src="/logo.png" 
-          alt="THREXIA Logo" 
-          style={{ 
-            width: 44, 
-            height: 44, 
-            objectFit: 'contain',
-            filter: 'drop-shadow(0 0 5px var(--primary-glow))' 
-          }} 
-        />
-        <div>
-           <div className="brand-text">THREXIA</div>
-           <div className="brand-sub">ANALYTICS ENGINE</div>
-        </div>
-      </Link>
+    <nav className="navbar" style={isMenuOpen ? { backdropFilter: 'none', WebkitBackdropFilter: 'none', backgroundColor: isLight ? '#F8FAFC' : '#05050A' } : {}}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <button onClick={toggleMenu} className="mobile-menu-toggle">
+          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+        <Link to="/" className="brand" style={{ textDecoration: 'none' }} onClick={closeMenu}>
+          <img 
+            src="/logo.png" 
+            alt="THREXIA Logo" 
+            style={{ 
+              width: 44, 
+              height: 44, 
+              objectFit: 'contain',
+              filter: 'drop-shadow(0 0 5px var(--primary-glow))' 
+            }} 
+          />
+          <div className="brand-labels">
+             <div className="brand-text">THREXIA</div>
+             <div className="brand-sub">ANALYTICS ENGINE</div>
+          </div>
+        </Link>
+      </div>
       
-      <div className="nav-links">
-        <Link to="/" className={`nav-link ${location.pathname === '/' ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      <div 
+        className={`nav-links ${isMenuOpen ? 'mobile-open' : ''}`}
+        style={isMenuOpen ? { 
+          backgroundColor: isLight ? '#F8FAFC' : '#05050A', 
+          opacity: 1,
+          backdropFilter: 'none'
+        } : {}}
+      >
+        <Link to="/" className={`nav-link ${location.pathname === '/' ? 'active' : ''}`} onClick={closeMenu}>
           Home
         </Link>
-        <Link to="/overview" className={`nav-link ${location.pathname === '/overview' ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <Link to="/overview" className={`nav-link ${location.pathname === '/overview' ? 'active' : ''}`} onClick={closeMenu}>
           Overview
         </Link>
         
         {isAuth && (
           <>
             {currentRole.links.includes('dashboard') && (
-              <Link to="/dashboard" className={`nav-link ${location.pathname === '/dashboard' ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Link to="/dashboard" className={`nav-link ${location.pathname === '/dashboard' ? 'active' : ''}`} onClick={closeMenu}>
                 Dashboard
               </Link>
             )}
             {currentRole.links.includes('logs') && (
-              <Link to="/logs" className={`nav-link ${location.pathname === '/logs' ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Link to="/logs" className={`nav-link ${location.pathname === '/logs' ? 'active' : ''}`} onClick={closeMenu}>
                 Logs
               </Link>
             )}
             {currentRole.links.includes('analyze') && (
-              <Link to="/analyze" className={`nav-link ${location.pathname === '/analyze' ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Link to="/analyze" className={`nav-link ${location.pathname === '/analyze' ? 'active' : ''}`} onClick={closeMenu}>
                 Analyze
               </Link>
             )}
@@ -81,28 +101,30 @@ function Navbar({ toggleTheme, isLight }) {
         )}
       </div>
       
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-        <button onClick={toggleTheme} style={{ background: 'transparent', border: 'none', color: 'var(--text-strong)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <button onClick={toggleTheme} className="theme-toggle">
           {isLight ? <Moon size={20} /> : <Sun size={20} />}
         </button>
         
         {isAuth ? (
-          <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div 
               title={`Profile: ${currentRole.name}`}
-              style={{ width: 40, height: 40, borderRadius: '8px', backgroundColor: 'rgba(139, 92, 246, 0.2)', border: '1px solid var(--border-highlight)', color: 'var(--primary-purple)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+              className="profile-badge">
               {currentRole.label}
             </div>
             <button 
               onClick={() => { localStorage.removeItem('threxia_auth'); localStorage.removeItem('threxia_role'); window.location.href = '/'; }} 
-              style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '0.25rem' }}
+              className="logout-btn"
               title="Secure Logout"
             >
-              <LogOut size={20} color="var(--danger-red)" />
+              <LogOut size={18} />
             </button>
-          </>
+          </div>
         ) : (
-          <Link to="/login" className="btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', textDecoration: 'none' }}>LOGIN</Link>
+          <StarBorder as={Link} to="/login" innerClassName="btn-primary" color="var(--primary-glow)" speed="4s" innerStyle={{ padding: '0.5rem 1.25rem', fontSize: '0.75rem', textDecoration: 'none', width: 'auto' }}>
+            LOGIN
+          </StarBorder>
         )}
       </div>
     </nav>
