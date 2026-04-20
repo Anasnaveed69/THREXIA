@@ -9,9 +9,32 @@ import random
 from datetime import datetime, timedelta
 import asyncio
 import jwt
-from passlib.context import CryptContext
 import csv
 from io import StringIO
+from dotenv import load_dotenv
+
+load_dotenv()
+
+def _normalize_mongo_uri(uri: str | None) -> str | None:
+    """Normalize common malformed Atlas URI query-string patterns."""
+    if not uri:
+        return uri
+    # Fix malformed pattern: ...?appName=Cluster0?retryWrites=true&w=majority
+    if "mongodb+srv://" in uri and "?appName=" in uri and "?retryWrites=" in uri:
+        return uri.replace("?retryWrites=", "&retryWrites=")
+    return uri
+
+normalized_mongo_uri = _normalize_mongo_uri(os.getenv("MONGO_URI"))
+if normalized_mongo_uri:
+    os.environ["MONGO_URI"] = normalized_mongo_uri
+
+from database import (
+    get_user_by_username,
+    verify_password,
+    hash_password,
+    get_all_users,
+    mongodb_connected,
+)
 
 app = FastAPI(title="THREXIA AI Threat Intelligence")
 
@@ -24,21 +47,9 @@ app.add_middleware(
 )
 
 # --- Security ---
-SECRET_KEY = "your-secret-key-here"
-ALGORITHM = "HS256"
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
 security = HTTPBearer()
-
-# --- Users Database ---
-users_db = {
-    "Emp_John": {"password": pwd_context.hash("password123"), "role": "employee"},
-    "Emp_Sarah": {"password": pwd_context.hash("password123"), "role": "employee"},
-    "Emp_Michael": {"password": pwd_context.hash("password123"), "role": "employee"},
-    "Contractor_Alex": {"password": pwd_context.hash("password123"), "role": "contractor"},
-}
-
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
 
 def create_access_token(data: dict):
     to_encode = data.copy()
@@ -52,9 +63,10 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
         payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         role: str = payload.get("role")
+        access_level: list = payload.get("access_level", [])
         if username is None or role is None:
             raise HTTPException(status_code=401, detail="Invalid token")
-        return {"username": username, "role": role}
+        return {"username": username, "role": role, "access_level": access_level}
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
@@ -76,7 +88,7 @@ state = {
     "total_logs_analyzed": 5420,
     "total_anomalies": 0,
     "system_activity_chart": [], # Replaces "chart_data" for clarity
-    "users": list(users_db.keys()),
+    "users": [u["username"] for u in get_all_users()],
     "live_alerts": [],
     "all_logs": [] # Full audit trail (last 100 entries)
 }
@@ -215,6 +227,9 @@ async def event_stream_simulator():
 
 @app.on_event("startup")
 async def startup_event():
+    mongo_uri = os.getenv("MONGO_URI", "")
+    if mongo_uri.startswith("mongodb+srv://") and not mongodb_connected:
+        raise RuntimeError("MongoDB Atlas is configured but the connection failed. Check MONGO_URI.")
     asyncio.create_task(event_stream_simulator())
 
 class LoginRequest(BaseModel):
@@ -223,11 +238,21 @@ class LoginRequest(BaseModel):
 
 @app.post("/api/login")
 def login(request: LoginRequest):
-    user = users_db.get(request.username)
+    user = get_user_by_username(request.username)
     if not user or not verify_password(request.password, user["password"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    access_token = create_access_token(data={"sub": request.username, "role": user["role"]})
-    return {"access_token": access_token, "token_type": "bearer", "role": user["role"]}
+    access_token = create_access_token(data={
+        "sub": request.username, 
+        "role": user["role"],
+        "access_level": user.get("access_level", [])
+    })
+    return {
+        "access_token": access_token, 
+        "token_type": "bearer", 
+        "role": user["role"],
+        "full_name": user.get("full_name", request.username),
+        "access_level": user.get("access_level", [])
+    }
 
 @app.get("/api/dashboard")
 def get_dashboard_data(current_user: dict = Depends(verify_token)):
@@ -242,10 +267,9 @@ def get_dashboard_data(current_user: dict = Depends(verify_token)):
     
 @app.get("/api/logs")
 def get_all_logs(current_user: dict = Depends(verify_token)):
-    if current_user["role"] == "contractor":
-        # Contractors see only their own logs or limited
-        user_logs = [log for log in state["all_logs"] if log["user"] == current_user["username"]]
-        return user_logs[:20]  # Limited
+    # Check if user has access to Logs
+    if "Logs" not in current_user.get("access_level", []):
+        raise HTTPException(status_code=403, detail="You don't have access to Logs")
     return state["all_logs"]
 
 class ManualLog(BaseModel):
@@ -253,8 +277,9 @@ class ManualLog(BaseModel):
 
 @app.post("/api/analyze_manual")
 def analyze_manual_log(log: ManualLog, current_user: dict = Depends(verify_token)):
-    if current_user["role"] != "employee":
-        raise HTTPException(status_code=403, detail="Access denied")
+    # Check if user has access to Manual Analysis
+    if "Manual Analysis" not in current_user.get("access_level", []):
+        raise HTTPException(status_code=403, detail="You don't have access to Manual Analysis")
     if not model or not scaler:
         return {"error": "Model offline"}
     
@@ -280,8 +305,9 @@ def analyze_manual_log(log: ManualLog, current_user: dict = Depends(verify_token
 
 @app.post("/api/upload_csv")
 async def upload_csv(file: UploadFile = File(...), current_user: dict = Depends(verify_token)):
-    if current_user["role"] != "employee":
-        raise HTTPException(status_code=403, detail="Access denied")
+    # Check if user has access to Manual Analysis
+    if "Manual Analysis" not in current_user.get("access_level", []):
+        raise HTTPException(status_code=403, detail="You don't have access to Manual Analysis")
     if not model or not scaler:
         return {"error": "Model offline"}
     
@@ -353,6 +379,58 @@ async def upload_csv(file: UploadFile = File(...), current_user: dict = Depends(
         return {"error": str(e)}
 
 @app.get("/api/download_csv_template")
+def download_csv_template():
+    """Download a template CSV file with 14 feature columns"""
+    headers = ["is_contractor", "emp_class", "foreign", "criminal", "medical", 
+               "printed", "printed_off_hours", "burned", "burned_other", "abroad", 
+               "hostility", "entries", "campus", "late"]
+    
+    output = StringIO()
+    writer = csv.writer(output)
+    writer.writerow(headers)
+    writer.writerow([0] * 14)  # Example row with zeros
+    
+    return {
+        "filename": "threxia_template.csv",
+        "content": output.getvalue()
+    }
+
+# =============== USER MANAGEMENT ENDPOINTS ===============
+
+@app.get("/api/users")
+def get_all_users_endpoint(current_user: dict = Depends(verify_token)):
+    """Get all users (admin only - users with full access)"""
+    if "Overview" not in current_user.get("access_level", []):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    
+    users = get_all_users()
+    # Remove sensitive data
+    for user in users:
+        user.pop("password", None)
+        user.pop("_id", None)
+    return {"users": users, "total": len(users)}
+
+@app.post("/api/seed-database")
+def seed_database_endpoint(current_user: dict = Depends(verify_token)):
+    """Seed the database with default users (admin only)"""
+    # Only Security Analysts should be able to seed
+    if current_user["role"] != "Security Analyst":
+        raise HTTPException(status_code=403, detail="Only Security Analysts can seed the database")
+    
+    try:
+        from seed_data import seed_database
+        seed_database()
+        
+        # Update state with new users
+        state["users"] = [u["username"] for u in get_all_users()]
+        
+        return {
+            "message": "Database seeded successfully",
+            "users_count": len(state["users"])
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error seeding database: {str(e)}")
+
 def download_csv_template(current_user: dict = Depends(verify_token)):
     """Returns a CSV template with sample data"""
     if current_user["role"] != "employee":

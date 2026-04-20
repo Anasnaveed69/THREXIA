@@ -1,11 +1,12 @@
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { Lock, User, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, Lock, User, ShieldCheck } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
   const handleLogin = async (e) => {
@@ -67,7 +68,38 @@ export default function Login() {
             <label style={{ fontSize: '0.65rem', color: 'var(--primary-purple)', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
               <Lock size={11} /> Neural Passcode
             </label>
-            <input type="password" className="login-input" placeholder="••••••••" required value={password} onChange={(e) => setPassword(e.target.value)} />
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                className="login-input"
+                placeholder="••••••••"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                style={{ paddingRight: '2.8rem' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                style={{
+                  position: 'absolute',
+                  right: '0.8rem',
+                  top: '40%',
+                  transform: 'translateY(-50%)',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
           </div>
 
           <button type="submit" className="btn-primary" style={{ padding: '1rem', fontSize: '0.85rem', letterSpacing: '0.2em' }}>
