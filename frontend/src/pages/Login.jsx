@@ -21,6 +21,7 @@ export default function Login() {
       const data = await response.json();
       localStorage.setItem('threxia_auth', data.access_token);
       localStorage.setItem('threxia_role', data.role);
+      localStorage.setItem('threxia_access', JSON.stringify(data.access_level));
       navigate('/dashboard');
     } catch (err) {
       setError(err.message);

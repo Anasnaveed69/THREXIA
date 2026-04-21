@@ -18,6 +18,9 @@
   --card-shadow: rgba(0, 0, 0, 0.4);
   --gradient-top: #150A21;
   --cyber-grid: rgba(139, 92, 246, 0.05);
+  --card-inner-bg: rgba(0, 0, 0, 0.2);
+  --item-bg: rgba(255, 255, 255, 0.02);
+  --item-border: rgba(255, 255, 255, 0.03);
 }
 
 body.light-mode {
@@ -33,6 +36,9 @@ body.light-mode {
   --card-shadow: rgba(139, 92, 246, 0.1);
   --gradient-top: #E0E7FF;
   --cyber-grid: rgba(139, 92, 246, 0.03);
+  --card-inner-bg: rgba(0, 0, 0, 0.03);
+  --item-bg: rgba(0, 0, 0, 0.01);
+  --item-border: rgba(0, 0, 0, 0.05);
 }
 
 * {

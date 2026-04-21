@@ -130,11 +130,19 @@ export default function Analyze() {
     window.URL.revokeObjectURL(url);
   };
 
+  const role = localStorage.getItem('threxia_role') || 'User';
+
   return (
     <div>
       <div className="page-header" style={{ marginBottom: '2rem' }}>
         <h1 className="page-title">Manual Log Analysis</h1>
-        <p className="page-subtitle">Upload CSV files or input specific 14-feature arrays to test the THREXIA prediction model.</p>
+        <p className="page-subtitle">
+          {role === 'Student/Researcher' ? (
+            <span style={{ color: 'var(--success-green)', fontWeight: 600 }}>ACADEMIC SANDBOX MODE ACTIVE</span>
+          ) : (
+            <span style={{ color: 'var(--primary-purple)', fontWeight: 600 }}>{role.toUpperCase()} CLEARANCE</span>
+          )} • Upload CSV files or input specific 14-feature arrays to test the THREXIA prediction model.
+        </p>
       </div>
 
       {/* Tab Navigation */}

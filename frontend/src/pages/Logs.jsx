@@ -62,11 +62,15 @@ export default function Logs() {
     setCurrentPage(1);
   }, [filter]);
 
+  const role = localStorage.getItem('threxia_role') || 'User';
+
   return (
     <div>
       <div className="page-header">
         <h1 className="page-title">Comprehensive Audit Trail</h1>
-        <p className="page-subtitle">A real-time registry of system baseline activity and detected anomalies.</p>
+        <p className="page-subtitle">
+          <span style={{ color: 'var(--primary-purple)', fontWeight: 600 }}>{role.toUpperCase()} VIEW</span> • A real-time registry of system baseline activity and detected anomalies.
+        </p>
       </div>
 
       <div className="logs-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', gap: '1rem', flexWrap: 'wrap' }}>

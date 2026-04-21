@@ -12,7 +12,7 @@ export default function Dashboard() {
     user: {}
   });
 
-  const role = localStorage.getItem('threxia_role') || 'employee';
+  const role = localStorage.getItem('threxia_role') || 'User';
 
   useEffect(() => {
     const fetchState = () => {
@@ -31,21 +31,26 @@ export default function Dashboard() {
 
   const anomalyPercentage = state.total_logs > 0 ? ((state.total_anomalies / state.total_logs) * 100).toFixed(1) : 0;
 
+  // Stakeholders with access to raw incident feeds
+  const showIncidentFeed = role === 'Security Analyst' || role === 'System Administrator';
+
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">Threat Intelligence Dashboard {role === 'contractor' ? '(Contractor View)' : ''}</h1>
-        <p className="page-subtitle">Real-time monitoring of user behaviour and system activity anomalies.</p>
+        <h1 className="page-title">Threat Intelligence Dashboard</h1>
+        <p className="page-subtitle">
+          <span style={{ color: 'var(--primary-purple)', fontWeight: 600 }}>{role.toUpperCase()} ACCESS</span> • Real-time monitoring of user behaviour and system activity anomalies.
+        </p>
       </div>
 
       <div className="grid-cards">
         <div className="card">
           <div className="card-title">Total System Logs Analyzed</div>
-          <div className="metric-value">{state.total_logs.toLocaleString()}</div>
+          <div className="metric-value">{(state?.total_logs || 0).toLocaleString()}</div>
         </div>
         <div className="card">
           <div className="card-title">Anomalous Behaviors Detected</div>
-          <div className="metric-value danger">{state.total_anomalies.toLocaleString()}</div>
+          <div className="metric-value danger">{(state?.total_anomalies || 0).toLocaleString()}</div>
         </div>
         <div className="card">
           <div className="card-title">Current Threat Risk Indicator</div>
@@ -53,7 +58,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="grid-dashboard">
+      <div className="grid-dashboard" style={{ gridTemplateColumns: showIncidentFeed ? '2fr 1fr' : '1fr' }}>
         {/* System Activity Chart */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', height: '480px' }}>
           <div className="card-title">System Activity Baseline & Deviations (24h)</div>
@@ -81,8 +86,8 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Live Threat Feed - Only for employees */}
-        {role === 'employee' && (
+        {/* Live Threat Feed - Only for Security Analyst and SysAdmin */}
+        {showIncidentFeed ? (
           <div className="card" style={{ display: 'flex', flexDirection: 'column', height: '480px' }}>
             <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
               <ShieldAlert size={16} color="var(--danger-red)" />
@@ -108,6 +113,17 @@ export default function Dashboard() {
               )}
             </div>
           </div>
+        ) : (
+          /* IT Manager Summary View Supplement */
+          role === 'IT Manager' && (
+            <div className="card" style={{ display: 'flex', flexDirection: 'column', padding: '2rem', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
+              <ShieldAlert size={48} color="var(--primary-purple)" style={{ opacity: 0.5, marginBottom: '1.5rem' }} />
+              <h3 style={{ color: 'var(--text-strong)', marginBottom: '1rem' }}>Managerial Summary View</h3>
+              <p style={{ color: 'var(--text-secondary)', maxWidth: '400px', fontSize: '0.9rem' }}>
+                Incident-level details are restricted to Security Analysts. Please check the **Audit Trail (Logs)** or contact the security team for raw data requests.
+              </p>
+            </div>
+          )
         )}
       </div>
     </div>

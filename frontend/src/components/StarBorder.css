@@ -6,7 +6,7 @@
   cursor: pointer;
   text-decoration: none;
   border: none;
-  background: rgba(255, 255, 255, 0.05); /* very subtle base for the track */
+  background: var(--item-bg); /* subtle base for the track */
 }
 
 .border-gradient-bottom {

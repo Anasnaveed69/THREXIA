@@ -21,11 +21,11 @@ const MetricPulse = ({
       <div style={{ 
         width: '100%', 
         height: height, 
-        background: 'rgba(255,255,255,0.05)', 
+        background: 'var(--item-bg)', 
         borderRadius: '10px', 
         overflow: 'hidden',
         position: 'relative',
-        border: '1px solid rgba(255,255,255,0.03)'
+        border: '1px solid var(--item-border)'
       }}>
         {/* Track Glow */}
         <div style={{

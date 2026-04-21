@@ -6,26 +6,43 @@ import Logs from './pages/Logs';
 import Analyze from './pages/Analyze';
 import Overview from './pages/Overview';
 import Home from './pages/Home';
+import Docs from './pages/Docs';
 import { LayoutDashboard, FileText, ActivitySquare, BookOpen, Sun, Moon, LogOut, Menu, X } from 'lucide-react';
 import StarBorder from './components/StarBorder';
 
-function PrivateRoute({ children }) {
+function PrivateRoute({ children, requiredPermission }) {
   const isAuth = !!localStorage.getItem('threxia_auth');
-  return isAuth ? children : <Navigate to="/login" />;
+  const access = JSON.parse(localStorage.getItem('threxia_access') || '[]');
+  
+  if (!isAuth) return <Navigate to="/login" />;
+  
+  if (requiredPermission && !access.includes(requiredPermission)) {
+    // Redirect to the first available authorized page or home
+    if (access.includes('Dashboard')) return <Navigate to="/dashboard" />;
+    if (access.includes('Overview')) return <Navigate to="/overview" />;
+    if (access.includes('Manual Analysis')) return <Navigate to="/analyze" />;
+    return <Navigate to="/" />;
+  }
+  
+  return children;
 }
 
 function Navbar({ toggleTheme, isLight }) {
   const location = useLocation();
   const isAuth = !!localStorage.getItem('threxia_auth');
-  const role = localStorage.getItem('threxia_role') || 'employee';
+  const role = localStorage.getItem('threxia_role') || '';
+  const access = JSON.parse(localStorage.getItem('threxia_access') || '[]');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const roleConfig = {
-    employee: { label: 'EMP', name: 'Employee', links: ['overview', 'dashboard', 'logs', 'analyze'] },
-    contractor: { label: 'CTR', name: 'Contractor', links: ['overview', 'dashboard'] },
+  // Map full role names to short labels for the badge
+  const roleLabels = {
+    'Security Analyst': 'ANA',
+    'IT Manager': 'MGR',
+    'System Administrator': 'ADM',
+    'Student/Researcher': 'RES'
   };
 
-  const currentRole = roleConfig[role] || roleConfig.employee;
+  const badgeLabel = roleLabels[role] || 'USR';
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const closeMenu = () => setIsMenuOpen(false);
@@ -76,28 +93,36 @@ function Navbar({ toggleTheme, isLight }) {
         <Link to="/" className={`nav-link ${location.pathname === '/' ? 'active' : ''}`} onClick={closeMenu}>
           Home
         </Link>
-        <Link to="/overview" className={`nav-link ${location.pathname === '/overview' ? 'active' : ''}`} onClick={closeMenu}>
-          Overview
-        </Link>
         
-        {isAuth && (
+        {/* Navigation depends strictly on the user's access level */}
+        {isAuth ? (
           <>
-            {currentRole.links.includes('dashboard') && (
+            {access.includes('Overview') && (
+              <Link to="/overview" className={`nav-link ${location.pathname === '/overview' ? 'active' : ''}`} onClick={closeMenu}>
+                Overview
+              </Link>
+            )}
+            {access.includes('Dashboard') && (
               <Link to="/dashboard" className={`nav-link ${location.pathname === '/dashboard' ? 'active' : ''}`} onClick={closeMenu}>
                 Dashboard
               </Link>
             )}
-            {currentRole.links.includes('logs') && (
+            {access.includes('Logs') && (
               <Link to="/logs" className={`nav-link ${location.pathname === '/logs' ? 'active' : ''}`} onClick={closeMenu}>
                 Logs
               </Link>
             )}
-            {currentRole.links.includes('analyze') && (
+            {access.includes('Manual Analysis') && (
               <Link to="/analyze" className={`nav-link ${location.pathname === '/analyze' ? 'active' : ''}`} onClick={closeMenu}>
                 Analyze
               </Link>
             )}
           </>
+        ) : (
+          /* For non-authenticated users, show public Docs link */
+          <Link to="/docs" className={`nav-link ${location.pathname === '/docs' ? 'active' : ''}`} onClick={closeMenu}>
+            Docs
+          </Link>
         )}
       </div>
       
@@ -109,12 +134,17 @@ function Navbar({ toggleTheme, isLight }) {
         {isAuth ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div 
-              title={`Profile: ${currentRole.name}`}
+              title={`Role: ${role}`}
               className="profile-badge">
-              {currentRole.label}
+              {badgeLabel}
             </div>
             <button 
-              onClick={() => { localStorage.removeItem('threxia_auth'); localStorage.removeItem('threxia_role'); window.location.href = '/'; }} 
+              onClick={() => { 
+                localStorage.removeItem('threxia_auth'); 
+                localStorage.removeItem('threxia_role'); 
+                localStorage.removeItem('threxia_access');
+                window.location.href = '/'; 
+              }} 
               className="logout-btn"
               title="Secure Logout"
             >
@@ -152,10 +182,29 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/overview" element={<Overview />} />
-            <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-            <Route path="/logs" element={<PrivateRoute><Logs /></PrivateRoute>} />
-            <Route path="/analyze" element={<PrivateRoute><Analyze /></PrivateRoute>} />
+            <Route path="/docs" element={<Docs />} />
+
+            {/* Permission-Protected Routes */}
+            <Route path="/overview" element={
+              <PrivateRoute requiredPermission="Overview">
+                <Overview />
+              </PrivateRoute>
+            } />
+            <Route path="/dashboard" element={
+              <PrivateRoute requiredPermission="Dashboard">
+                <Dashboard />
+              </PrivateRoute>
+            } />
+            <Route path="/logs" element={
+              <PrivateRoute requiredPermission="Logs">
+                <Logs />
+              </PrivateRoute>
+            } />
+            <Route path="/analyze" element={
+              <PrivateRoute requiredPermission="Manual Analysis">
+                <Analyze />
+              </PrivateRoute>
+            } />
           </Routes>
         </main>
       </div>

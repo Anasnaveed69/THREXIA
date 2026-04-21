@@ -56,7 +56,7 @@ export default function Home() {
             <StarBorder as={Link} to="/login" innerClassName="btn-glowing" color="var(--primary-glow)" speed="4s">
               Initialize Gateway <ChevronRight size={18} style={{ marginLeft: '0.5rem' }} />
             </StarBorder>
-            <StarBorder as={Link} to="/overview" innerClassName="btn-secondary" color="rgba(255,255,255,0.4)" innerStyle={{ padding: '1rem 2rem', textDecoration: 'none', borderRadius: '4px', border: '1px solid var(--border-color)', color: 'var(--text-strong)', fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--panel-bg)', backdropFilter: 'blur(5px)' }}>
+            <StarBorder as={Link} to="/docs" innerClassName="btn-secondary" color="rgba(255,255,255,0.4)" innerStyle={{ padding: '1rem 2rem', textDecoration: 'none', borderRadius: '4px', border: '1px solid var(--border-color)', color: 'var(--text-strong)', fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--panel-bg)', backdropFilter: 'blur(5px)' }}>
               Read Documentation <BookOpen size={18} />
             </StarBorder>
           </div>

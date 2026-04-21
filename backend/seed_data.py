@@ -119,11 +119,11 @@ USERS_DATA = [
 
 def seed_database():
     """Clear existing users and populate with new roles"""
-    print("🔄 Clearing existing users...")
+    print("[RESET] Clearing existing users...")
     deleted_count = delete_all_users()
     print(f"   Deleted {deleted_count} users")
     
-    print("\n📝 Creating new users...")
+    print("\n[CREATE] Creating new users...")
     for user_data in USERS_DATA:
         user_id = create_user(
             username=user_data["username"],
@@ -133,9 +133,9 @@ def seed_database():
             access_level=user_data["access_level"]
         )
         if user_id:
-            print(f"   ✓ Created {user_data['full_name']} ({user_data['role']})")
+            print(f"   [OK] Created {user_data['full_name']} ({user_data['role']})")
     
-    print("\n📊 Final User Summary:")
+    print("\n[SUMMARY] Final User Summary:")
     print("=" * 70)
     users = get_all_users()
     
@@ -156,7 +156,7 @@ def seed_database():
         print(f"\n{role} ({len(role_users)} users)")
         print(f"  Access: {', '.join(access)}")
         for user in role_users:
-            print(f"  • {user['username']} - {user['full_name']}")
+            print(f"  - {user['username']} - {user['full_name']}")
 
 if __name__ == "__main__":
     seed_database()

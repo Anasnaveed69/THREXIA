@@ -180,7 +180,7 @@ async def event_stream_simulator():
         state["total_logs_analyzed"] += 1
         log_id = f"LOG-{random.randint(10000, 99999)}"
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        user = random.choice(state["users"])
+        user = random.choice(state["users"]) if state["users"] else "system"
         
         if model and scaler:
             input_arr = np.array(features).reshape(1, -1)
@@ -229,7 +229,25 @@ async def event_stream_simulator():
 async def startup_event():
     mongo_uri = os.getenv("MONGO_URI", "")
     if mongo_uri.startswith("mongodb+srv://") and not mongodb_connected:
-        raise RuntimeError("MongoDB Atlas is configured but the connection failed. Check MONGO_URI.")
+        print("WARNING: MongoDB Atlas connection failed. Running in FALLBACK MODE.")
+    
+    # Ensure we have users in the system (especially for fallback mode)
+    if not get_all_users():
+        print("INFO: Database is empty. Seeding with default users...")
+        try:
+            from seed_data import seed_database
+            seed_database()
+            print("SUCCESS: Database seeded.")
+        except Exception as e:
+            print(f"ERROR: Could not seed database: {e}")
+    
+    # Refresh the users in state
+    state["users"] = [u["username"] for u in get_all_users()]
+    if not state["users"]:
+        # Add a dummy user if still empty to prevent crash
+        state["users"] = ["system_internal"]
+        print("WARNING: No users found even after seeding. Using dummy user for simulator.")
+
     asyncio.create_task(event_stream_simulator())
 
 class LoginRequest(BaseModel):
@@ -256,6 +274,13 @@ def login(request: LoginRequest):
 
 @app.get("/api/dashboard")
 def get_dashboard_data(current_user: dict = Depends(verify_token)):
+    # Check if user has access to Dashboard stats (either via Dashboard or Overview permission)
+    user_access = current_user.get("access_level", [])
+    if "Dashboard" not in user_access and "Overview" not in user_access:
+        raise HTTPException(
+            status_code=403, 
+            detail=f"Access Denied: Role '{current_user['role']}' does not have Intelligence clearance."
+        )
     return {
         "status": "Running AI Model" if model else "Model Offline",
         "total_logs": state["total_logs_analyzed"],
@@ -269,7 +294,10 @@ def get_dashboard_data(current_user: dict = Depends(verify_token)):
 def get_all_logs(current_user: dict = Depends(verify_token)):
     # Check if user has access to Logs
     if "Logs" not in current_user.get("access_level", []):
-        raise HTTPException(status_code=403, detail="You don't have access to Logs")
+        raise HTTPException(
+            status_code=403, 
+            detail=f"Access Denied: Role '{current_user['role']}' does not have Audit Trail clearance."
+        )
     return state["all_logs"]
 
 class ManualLog(BaseModel):
@@ -279,7 +307,10 @@ class ManualLog(BaseModel):
 def analyze_manual_log(log: ManualLog, current_user: dict = Depends(verify_token)):
     # Check if user has access to Manual Analysis
     if "Manual Analysis" not in current_user.get("access_level", []):
-        raise HTTPException(status_code=403, detail="You don't have access to Manual Analysis")
+        raise HTTPException(
+            status_code=403, 
+            detail=f"Access Denied: Role '{current_user['role']}' cannot perform manual analysis."
+        )
     if not model or not scaler:
         return {"error": "Model offline"}
     
@@ -307,7 +338,10 @@ def analyze_manual_log(log: ManualLog, current_user: dict = Depends(verify_token
 async def upload_csv(file: UploadFile = File(...), current_user: dict = Depends(verify_token)):
     # Check if user has access to Manual Analysis
     if "Manual Analysis" not in current_user.get("access_level", []):
-        raise HTTPException(status_code=403, detail="You don't have access to Manual Analysis")
+        raise HTTPException(
+            status_code=403, 
+            detail=f"Access Denied: Role '{current_user['role']}' cannot upload or batch process logs."
+        )
     if not model or not scaler:
         return {"error": "Model offline"}
     
@@ -379,20 +413,33 @@ async def upload_csv(file: UploadFile = File(...), current_user: dict = Depends(
         return {"error": str(e)}
 
 @app.get("/api/download_csv_template")
-def download_csv_template():
-    """Download a template CSV file with 14 feature columns"""
+def download_csv_template_endpoint(current_user: dict = Depends(verify_token)):
+    """Returns a CSV template with sample data (Overview access required)"""
+    if "Overview" not in current_user.get("access_level", []):
+        raise HTTPException(
+            status_code=403, 
+            detail=f"Access Denied: Role '{current_user['role']}' does not have sufficient clearance to download templates."
+        )
+    
+    # Headers for the CSV
     headers = ["is_contractor", "emp_class", "foreign", "criminal", "medical", 
                "printed", "printed_off_hours", "burned", "burned_other", "abroad", 
                "hostility", "entries", "campus", "late"]
     
-    output = StringIO()
-    writer = csv.writer(output)
-    writer.writerow(headers)
-    writer.writerow([0] * 14)  # Example row with zeros
+    # Sample template with 3 rows
+    template_data = [
+        headers,
+        ["0", "1", "0", "0", "0", "5", "0", "0", "0", "0", "0", "2", "1", "0"],  # Normal
+        ["1", "3", "0", "0", "0", "500", "50", "45", "0", "0", "2", "40", "2", "1"],  # Anomaly
+    ]
+    
+    csv_output = StringIO()
+    writer = csv.writer(csv_output)
+    writer.writerows(template_data)
     
     return {
-        "filename": "threxia_template.csv",
-        "content": output.getvalue()
+        "template": csv_output.getvalue(),
+        "filename": "threxia_template.csv"
     }
 
 # =============== USER MANAGEMENT ENDPOINTS ===============
@@ -430,26 +477,3 @@ def seed_database_endpoint(current_user: dict = Depends(verify_token)):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error seeding database: {str(e)}")
-
-def download_csv_template(current_user: dict = Depends(verify_token)):
-    """Returns a CSV template with sample data"""
-    if current_user["role"] != "employee":
-        raise HTTPException(status_code=403, detail="Access denied")
-    
-    # Sample template with 5 rows
-    template_data = [
-        ["contractor", "emp_class", "foreign", "criminal", "medical", "printed", "off_hours", "burned", "burned_other", "abroad", "hostility", "entries", "campus", "late"],
-        ["0", "1", "0", "0", "0", "5", "0", "0", "0", "0", "0", "2", "1", "0"],  # Normal
-        ["0", "2", "0", "0", "0", "8", "0", "0", "0", "0", "0", "3", "1", "0"],  # Normal
-        ["1", "3", "0", "0", "0", "500", "50", "45", "0", "0", "2", "40", "2", "1"],  # Anomaly
-        ["0", "1", "0", "0", "0", "150", "30", "20", "0", "0", "1", "25", "1", "1"],  # Anomaly
-    ]
-    
-    csv_output = StringIO()
-    writer = csv.writer(csv_output)
-    writer.writerows(template_data)
-    
-    return {
-        "template": csv_output.getvalue(),
-        "filename": "threxia_template.csv"
-    }

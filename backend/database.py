@@ -26,9 +26,9 @@ try:
     client.admin.command('ping')
     db = client[MONGO_DB_NAME]
     mongodb_connected = True
-    print("✓ Connected to MongoDB")
+    print("[SUCCESS] Connected to MongoDB")
 except (ServerSelectionTimeoutError, Exception) as e:
-    print(f"⚠ MongoDB not available: {type(e).__name__}")
+    print(f"[WARNING] MongoDB not available: {type(e).__name__}")
     print(f"  Reason: {str(e)}")
     print("  Running in FALLBACK MODE (in-memory storage)")
     db = None
