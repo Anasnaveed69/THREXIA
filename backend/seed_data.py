@@ -1,162 +1,89 @@
 """
-Seed data for THREXIA MongoDB database
-Four user roles with different access levels:
-1. Security Analyst - Full Access
-2. IT Manager - Summaries Only
-3. System Administrator - Monitoring & Records
-4. Student/Researcher - Background & Testing
+THREXIA — Seed Data
+Populates the database with default demo users across all 4 roles.
+All seeded users are given status='active' so they can log in immediately.
+The System Administrator role is NOT exposed on the public registration form.
 """
 
-from database import create_user, delete_all_users, get_all_users
+from database import create_user, delete_all_users, get_all_users, ROLE_ACCESS_MAP
 
-# Define user roles and their access levels
-USER_ROLES = {
-    "Security Analyst": {
-        "access_level": ["Overview", "Dashboard", "Logs", "Manual Analysis"],
-        "description": "Full Access to all features"
-    },
-    "IT Manager": {
-        "access_level": ["Overview", "Dashboard"],
-        "description": "Summaries Only"
-    },
-    "System Administrator": {
-        "access_level": ["Dashboard", "Logs"],
-        "description": "Monitoring & Records"
-    },
-    "Student/Researcher": {
-        "access_level": ["Overview", "Manual Analysis"],
-        "description": "Background & Testing"
-    }
-}
+# ─────────────────────────────────────────────
+#  Canonical user seed definitions
+# ─────────────────────────────────────────────
+SEED_USERS = [
+    # ── Security Analysts ──
+    {"username": "analyst_james",  "password": "SecurePass123!", "full_name": "James Carter",    "role": "Security Analyst",    "email": "james.carter@threxia.io"},
+    {"username": "analyst_emily",  "password": "SecurePass123!", "full_name": "Emily Rodriguez",  "role": "Security Analyst",    "email": "emily.rodriguez@threxia.io"},
+    {"username": "analyst_david",  "password": "SecurePass123!", "full_name": "David Kim",        "role": "Security Analyst",    "email": "david.kim@threxia.io"},
 
-# Users data for each role
-USERS_DATA = [
-    # Security Analysts - 3 users
-    {
-        "username": "analyst_james",
-        "password": "SecurePass123!",
-        "full_name": "James Wilson",
-        "role": "Security Analyst",
-        "access_level": USER_ROLES["Security Analyst"]["access_level"]
-    },
-    {
-        "username": "analyst_emily",
-        "password": "SecurePass123!",
-        "full_name": "Emily Rodriguez",
-        "role": "Security Analyst",
-        "access_level": USER_ROLES["Security Analyst"]["access_level"]
-    },
-    {
-        "username": "analyst_david",
-        "password": "SecurePass123!",
-        "full_name": "David Chen",
-        "role": "Security Analyst",
-        "access_level": USER_ROLES["Security Analyst"]["access_level"]
-    },
-    
-    # IT Managers - 2 users
-    {
-        "username": "manager_alex",
-        "password": "ManagerPass123!",
-        "full_name": "Alex Thompson",
-        "role": "IT Manager",
-        "access_level": USER_ROLES["IT Manager"]["access_level"]
-    },
-    {
-        "username": "manager_sarah",
-        "password": "ManagerPass123!",
-        "full_name": "Sarah Johnson",
-        "role": "IT Manager",
-        "access_level": USER_ROLES["IT Manager"]["access_level"]
-    },
-    
-    # System Administrators - 3 users
-    {
-        "username": "admin_robert",
-        "password": "AdminPass123!",
-        "full_name": "Robert Kumar",
-        "role": "System Administrator",
-        "access_level": USER_ROLES["System Administrator"]["access_level"]
-    },
-    {
-        "username": "admin_jessica",
-        "password": "AdminPass123!",
-        "full_name": "Jessica Lee",
-        "role": "System Administrator",
-        "access_level": USER_ROLES["System Administrator"]["access_level"]
-    },
-    {
-        "username": "admin_michael",
-        "password": "AdminPass123!",
-        "full_name": "Michael Brown",
-        "role": "System Administrator",
-        "access_level": USER_ROLES["System Administrator"]["access_level"]
-    },
-    
-    # Student/Researchers - 3 users
-    {
-        "username": "student_mark",
-        "password": "StudentPass123!",
-        "full_name": "Mark Patterson",
-        "role": "Student/Researcher",
-        "access_level": USER_ROLES["Student/Researcher"]["access_level"]
-    },
-    {
-        "username": "student_lisa",
-        "password": "StudentPass123!",
-        "full_name": "Lisa Wang",
-        "role": "Student/Researcher",
-        "access_level": USER_ROLES["Student/Researcher"]["access_level"]
-    },
-    {
-        "username": "student_james",
-        "password": "StudentPass123!",
-        "full_name": "James Martinez",
-        "role": "Student/Researcher",
-        "access_level": USER_ROLES["Student/Researcher"]["access_level"]
-    }
+    # ── IT Managers ──
+    {"username": "manager_alex",   "password": "ManagerPass123!", "full_name": "Alex Thompson",  "role": "IT Manager",          "email": "alex.thompson@threxia.io"},
+    {"username": "manager_sarah",  "password": "ManagerPass123!", "full_name": "Sarah Mitchell",  "role": "IT Manager",          "email": "sarah.mitchell@threxia.io"},
+
+    # ── System Administrators ──
+    {"username": "admin_anas",     "password": "AdminPass123!",   "full_name": "Anas Naveed Butt",  "role": "System Administrator", "email": "buttanas813@gmail.com"},
+    {"username": "admin_usman",    "password": "AdminPass123!",   "full_name": "Muhammad Usman",    "role": "System Administrator", "email": "admin.usman@threxia.io"},
+
+    # ── Students / Researchers ──
+    {"username": "student_mark",   "password": "StudentPass123!", "full_name": "Mark Jensen",    "role": "Student/Researcher",  "email": "mark.jensen@threxia.io"},
+    {"username": "student_lisa",   "password": "StudentPass123!", "full_name": "Lisa Nguyen",    "role": "Student/Researcher",  "email": "lisa.nguyen@threxia.io"},
+    {"username": "student_james",  "password": "StudentPass123!", "full_name": "James Wilson",   "role": "Student/Researcher",  "email": "james.wilson@threxia.io"},
 ]
 
-def seed_database():
-    """Clear existing users and populate with new roles"""
-    print("[RESET] Clearing existing users...")
-    deleted_count = delete_all_users()
-    print(f"   Deleted {deleted_count} users")
-    
-    print("\n[CREATE] Creating new users...")
-    for user_data in USERS_DATA:
-        user_id = create_user(
-            username=user_data["username"],
-            password=user_data["password"],
-            full_name=user_data["full_name"],
-            role=user_data["role"],
-            access_level=user_data["access_level"]
+
+def seed_database(clear_existing: bool = False) -> dict:
+    """
+    Seed the database with demo users.
+    - clear_existing=True  → wipe all users first (dev/reset mode)
+    - clear_existing=False → skip users that already exist (safe re-run)
+    """
+    if clear_existing:
+        deleted = delete_all_users()
+        print(f"[SEED] Cleared {deleted} existing user(s).")
+
+    created = 0
+    skipped = 0
+
+    for u in SEED_USERS:
+        role         = u["role"]
+        access_level = ROLE_ACCESS_MAP.get(role, [])
+
+        result = create_user(
+            username=u["username"],
+            password=u["password"],
+            full_name=u["full_name"],
+            role=role,
+            access_level=access_level,
+            email=u.get("email", ""),
+            status="active",
+            reason="Seeded system account",
         )
-        if user_id:
-            print(f"   [OK] Created {user_data['full_name']} ({user_data['role']})")
-    
-    print("\n[SUMMARY] Final User Summary:")
-    print("=" * 70)
-    users = get_all_users()
-    
-    if not users:
-        print("No users found. Check database connection.")
-        return
-    
-    # Group by role
-    by_role = {}
-    for user in users:
-        role = user.get("role", "Unknown")
-        if role not in by_role:
-            by_role[role] = []
-        by_role[role].append(user)
-    
-    for role, role_users in sorted(by_role.items()):
-        access = USER_ROLES[role]["access_level"]
-        print(f"\n{role} ({len(role_users)} users)")
-        print(f"  Access: {', '.join(access)}")
-        for user in role_users:
-            print(f"  - {user['username']} - {user['full_name']}")
+
+        if result:
+            created += 1
+            print(f"  [+] Created : {u['username']} ({role})")
+        else:
+            skipped += 1
+            print(f"  [~] Skipped : {u['username']} (already exists)")
+
+    print(f"\n[SEED] Done — {created} created, {skipped} skipped.")
+    return {"created": created, "skipped": skipped}
+
 
 if __name__ == "__main__":
-    seed_database()
+    import sys, io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+
+    print("\n====================================")
+    print("   THREXIA -- Database Seed Script")
+    print("====================================\n")
+
+    all_users = get_all_users()
+    print(f"[INFO] Users currently in DB: {len(all_users)}")
+
+    result = seed_database(clear_existing=False)
+
+    print("\n[VERIFICATION] Active users after seeding:")
+    for user in get_all_users():
+        print(f"  - {user['username']:<20} {user['role']:<25} status={user.get('status','?')}")
+    print()

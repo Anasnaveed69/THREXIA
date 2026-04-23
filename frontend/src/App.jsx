@@ -1,18 +1,34 @@
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Logs from './pages/Logs';
 import Analyze from './pages/Analyze';
 import Overview from './pages/Overview';
 import Home from './pages/Home';
 import Docs from './pages/Docs';
-import { LayoutDashboard, FileText, ActivitySquare, BookOpen, Sun, Moon, LogOut, Menu, X } from 'lucide-react';
+import AdminAccessControl from './pages/AdminAccessControl';
+import ForgotPassword from './pages/ForgotPassword';
+import SecuritySettings from './pages/SecuritySettings';
+import { LayoutDashboard, FileText, ActivitySquare, BookOpen, Sun, Moon, LogOut, Menu, X, ShieldCheck, Lock } from 'lucide-react';
 import StarBorder from './components/StarBorder';
+
+// Helper to safely parse JSON from localStorage
+const safeParse = (key, fallback = []) => {
+  try {
+    const item = localStorage.getItem(key);
+    if (!item) return fallback;
+    return JSON.parse(item);
+  } catch (e) {
+    console.error(`Error parsing localStorage key "${key}":`, e);
+    return fallback;
+  }
+};
 
 function PrivateRoute({ children, requiredPermission }) {
   const isAuth = !!localStorage.getItem('threxia_auth');
-  const access = JSON.parse(localStorage.getItem('threxia_access') || '[]');
+  const access = safeParse('threxia_access');
   
   if (!isAuth) return <Navigate to="/login" />;
   
@@ -31,7 +47,7 @@ function Navbar({ toggleTheme, isLight }) {
   const location = useLocation();
   const isAuth = !!localStorage.getItem('threxia_auth');
   const role = localStorage.getItem('threxia_role') || '';
-  const access = JSON.parse(localStorage.getItem('threxia_access') || '[]');
+  const access = safeParse('threxia_access');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Map full role names to short labels for the badge
@@ -117,6 +133,11 @@ function Navbar({ toggleTheme, isLight }) {
                 Analyze
               </Link>
             )}
+            {access.includes('Access Control') && (
+              <Link to="/admin/access-control" className={`nav-link ${location.pathname === '/admin/access-control' ? 'active' : ''}`} onClick={closeMenu} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <ShieldCheck size={14} /> Access Control
+              </Link>
+            )}
           </>
         ) : (
           /* For non-authenticated users, show public Docs link */
@@ -138,12 +159,21 @@ function Navbar({ toggleTheme, isLight }) {
               className="profile-badge">
               {badgeLabel}
             </div>
+            <Link 
+              to="/security" 
+              className="logout-btn"
+              title="Security Settings"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <Lock size={18} />
+            </Link>
             <button 
-              onClick={() => { 
-                localStorage.removeItem('threxia_auth'); 
-                localStorage.removeItem('threxia_role'); 
+              onClick={() => {
+                localStorage.removeItem('threxia_auth');
+                localStorage.removeItem('threxia_role');
                 localStorage.removeItem('threxia_access');
-                window.location.href = '/'; 
+                localStorage.removeItem('threxia_name');
+                window.location.href = '/';
               }} 
               className="logout-btn"
               title="Secure Logout"
@@ -182,6 +212,8 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/docs" element={<Docs />} />
 
             {/* Permission-Protected Routes */}
@@ -203,6 +235,16 @@ export default function App() {
             <Route path="/analyze" element={
               <PrivateRoute requiredPermission="Manual Analysis">
                 <Analyze />
+              </PrivateRoute>
+            } />
+            <Route path="/admin/access-control" element={
+              <PrivateRoute requiredPermission="Access Control">
+                <AdminAccessControl />
+              </PrivateRoute>
+            } />
+            <Route path="/security" element={
+              <PrivateRoute>
+                <SecuritySettings />
               </PrivateRoute>
             } />
           </Routes>

@@ -1,15 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, ChevronDown, ChevronUp, Radio, Activity, Terminal } from 'lucide-react';
+import { AlertCircle, ChevronDown, ChevronUp, Radio, Activity, Terminal, CheckCircle2, ArrowUpCircle, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import StarBorder from '../components/StarBorder';
 
 export default function Logs() {
   const [allLogs, setAllLogs] = useState([]);
-  const [filter, setFilter] = useState('all'); // all, threat, safe
+  const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedId, setExpandedId] = useState(null);
+  const [incidentActions, setIncidentActions] = useState({}); // { [logId]: 'resolved' | 'escalated' }
   const itemsPerPage = 50;
+
+  const isAnalyst = (localStorage.getItem('threxia_role') || '') === 'Security Analyst';
+
+  const handleAction = (logId, action) => {
+    setIncidentActions(prev => ({ ...prev, [logId]: action }));
+  };
 
   const FEATURE_LABELS = [
     { label: "Contractor Status", icon: <Radio size={12} /> },
@@ -63,14 +70,28 @@ export default function Logs() {
   }, [filter]);
 
   const role = localStorage.getItem('threxia_role') || 'User';
+  const escalatedCount = Object.values(incidentActions).filter(v => v === 'escalated').length;
+  const resolvedCount  = Object.values(incidentActions).filter(v => v === 'resolved').length;
 
   return (
     <div>
-      <div className="page-header">
-        <h1 className="page-title">Comprehensive Audit Trail</h1>
-        <p className="page-subtitle">
-          <span style={{ color: 'var(--primary-purple)', fontWeight: 600 }}>{role.toUpperCase()} VIEW</span> • A real-time registry of system baseline activity and detected anomalies.
-        </p>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h1 className="page-title">Comprehensive Audit Trail</h1>
+          <p className="page-subtitle">
+            <span style={{ color: 'var(--primary-purple)', fontWeight: 600 }}>{role.toUpperCase()} VIEW</span> • A real-time registry of system baseline activity and detected anomalies.
+          </p>
+        </div>
+        {isAnalyst && (
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <div className="analyst-stat-pill" style={{ borderColor: 'rgba(16,185,129,0.3)', color: '#10B981' }}>
+              <CheckCircle2 size={14} /> {resolvedCount} Resolved
+            </div>
+            <div className="analyst-stat-pill" style={{ borderColor: 'rgba(249,115,22,0.3)', color: '#F97316' }}>
+              <ArrowUpCircle size={14} /> {escalatedCount} Escalated
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="logs-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', gap: '1rem', flexWrap: 'wrap' }}>
@@ -119,6 +140,7 @@ export default function Logs() {
                 <th>AI CONFIDENCE</th>
                 <th>BEHAVIORAL AUDIT</th>
                 <th>STATUS</th>
+                {isAnalyst && <th>ACTIONS</th>}
               </tr>
             </thead>
             <tbody>
@@ -163,17 +185,41 @@ export default function Logs() {
                       ))}
                     </td>
                     <td>
-                      <span className={`badge ${log.type === 'threat' ? 'badge-danger' : ''}`} style={{
-                        backgroundColor: log.type === 'safe' ? 'var(--success-green)' : '',
-                        color: log.type === 'safe' ? 'white' : '',
-                        border: log.type === 'safe' ? 'none' : ''
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                          {log.type === 'threat' ? <AlertCircle size={12} /> : <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'white' }} />}
-                          {log.status}
-                        </div>
-                      </span>
+                      {incidentActions[log.id] === 'resolved' ? (
+                        <span className="badge" style={{ background: 'rgba(16,185,129,0.15)', color: '#10B981', border: '1px solid rgba(16,185,129,0.3)' }}>
+                          <CheckCircle2 size={12} /> Resolved
+                        </span>
+                      ) : incidentActions[log.id] === 'escalated' ? (
+                        <span className="badge" style={{ background: 'rgba(249,115,22,0.1)', color: '#F97316', border: '1px solid rgba(249,115,22,0.3)' }}>
+                          <ArrowUpCircle size={12} /> Escalated
+                        </span>
+                      ) : (
+                        <span className={`badge ${log.type === 'threat' ? 'badge-danger' : ''}`} style={{ backgroundColor: log.type === 'safe' ? 'var(--success-green)' : '', color: log.type === 'safe' ? 'white' : '', border: log.type === 'safe' ? 'none' : '' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                            {log.type === 'threat' ? <AlertCircle size={12} /> : <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'white' }} />}
+                            {log.status}
+                          </div>
+                        </span>
+                      )}
                     </td>
+                    {isAnalyst && (
+                      <td onClick={e => e.stopPropagation()}>
+                        {log.type === 'threat' && !incidentActions[log.id] ? (
+                          <div style={{ display: 'flex', gap: '0.4rem' }}>
+                            <button onClick={() => handleAction(log.id, 'resolved')} className="incident-btn incident-btn-resolve" title="Mark as Resolved">
+                              <CheckCircle2 size={13} /> Resolve
+                            </button>
+                            <button onClick={() => handleAction(log.id, 'escalated')} className="incident-btn incident-btn-escalate" title="Escalate to Manager">
+                              <ArrowUpCircle size={13} /> Escalate
+                            </button>
+                          </div>
+                        ) : incidentActions[log.id] ? (
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Action taken</span>
+                        ) : (
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', opacity: 0.4 }}>—</span>
+                        )}
+                      </td>
+                    )}
                   </tr>
                   
                   <AnimatePresence>
@@ -188,26 +234,34 @@ export default function Logs() {
                             style={{ overflow: 'hidden', background: 'rgba(0,0,0,0.2)' }}
                           >
                             <div style={{ padding: '1.5rem 2rem' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem', color: 'var(--primary-purple)', fontSize: '0.85rem', fontWeight: 600, letterSpacing: '0.1em' }}>
-                                <Activity size={16} /> BEHAVIORAL PATTERN ANALYSIS
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--primary-purple)', fontSize: '0.85rem', fontWeight: 600, letterSpacing: '0.1em' }}>
+                                  <Activity size={16} /> BEHAVIORAL PATTERN ANALYSIS
+                                </div>
+                                {isAnalyst && log.type === 'threat' && (
+                                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                    {!incidentActions[log.id] ? (
+                                      <>
+                                        <button onClick={() => handleAction(log.id, 'resolved')} className="incident-btn-lg incident-btn-resolve">
+                                          <CheckCircle2 size={14} /> Mark as Resolved
+                                        </button>
+                                        <button onClick={() => handleAction(log.id, 'escalated')} className="incident-btn-lg incident-btn-escalate">
+                                          <ArrowUpCircle size={14} /> Escalate to Manager
+                                        </button>
+                                      </>
+                                    ) : (
+                                      <span style={{ fontSize: '0.8rem', color: incidentActions[log.id] === 'resolved' ? '#10B981' : '#F97316', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                        {incidentActions[log.id] === 'resolved' ? <><CheckCircle2 size={14}/> Marked Resolved</> : <><ArrowUpCircle size={14}/> Escalated to Manager</>}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
                                 {log.features && log.features.map((val, fIdx) => (
-                                  <div 
-                                    key={fIdx} 
-                                    style={{ 
-                                      padding: '0.75rem', 
-                                      borderRadius: '6px', 
-                                      background: 'rgba(255,255,255,0.02)', 
-                                      border: '1px solid rgba(255,255,255,0.05)',
-                                      display: 'flex',
-                                      flexDirection: 'column',
-                                      gap: '0.25rem'
-                                    }}
-                                  >
+                                  <div key={fIdx} style={{ padding: '0.75rem', borderRadius: '6px', background: 'var(--card-inner-bg)', border: '1px solid var(--item-border)', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-secondary)', fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase' }}>
-                                      {FEATURE_LABELS[fIdx]?.icon}
-                                      {FEATURE_LABELS[fIdx]?.label}
+                                      {FEATURE_LABELS[fIdx]?.icon} {FEATURE_LABELS[fIdx]?.label}
                                     </div>
                                     <div style={{ fontSize: '1.1rem', fontWeight: 700, color: (val > 0 && [3,6,7,10,13].includes(fIdx)) || (val > 10 && [5,11].includes(fIdx)) ? 'var(--danger-red)' : 'var(--text-strong)' }}>
                                       {val}
@@ -215,7 +269,7 @@ export default function Logs() {
                                   </div>
                                 ))}
                               </div>
-                              <div style={{ marginTop: '1.5rem', fontSize: '0.8rem', color: 'var(--text-secondary)', fontStyle: 'italic', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem' }}>
+                              <div style={{ marginTop: '1.5rem', fontSize: '0.8rem', color: 'var(--text-secondary)', fontStyle: 'italic', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
                                 * Highlighted values indicate deviations from established user baseline.
                               </div>
                             </div>
