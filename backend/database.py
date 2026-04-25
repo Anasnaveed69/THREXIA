@@ -47,7 +47,6 @@ try:
     db["audit_logs"].create_index("username")
 
     # ── Initialize Collection References ──
-    global users_col, audit_logs_col, telemetry_logs_col, password_resets_col
     users_col           = db["users"]
     audit_logs_col      = db["audit_logs"]
     telemetry_logs_col  = db["telemetry_logs"]
