@@ -79,7 +79,8 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "https://threxia.work.gd",
-        "https://threxia.vercel.app"
+        "https://threxia.vercel.app",
+        "https://threxia-anasnaveed69s-projects.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
