@@ -116,6 +116,7 @@ export default function Dashboard() {
             setDashState(prev => ({
               ...prev,
               ...data,
+              status: data.status || 'Running AI Model',
               // Ensure we never show 0 if seeded data is available
               total_logs: data.total_logs || prev.total_logs || 5420,
               total_anomalies: data.total_anomalies || prev.total_anomalies || 0
@@ -344,15 +345,21 @@ export default function Dashboard() {
       <div className="grid-cards">
         <div className="card">
           <div className="card-title">Total System Logs Analyzed</div>
-          <div className="metric-value">{(dashState?.total_logs || 0).toLocaleString()}</div>
+          <div className="metric-value">
+            {dashState.status === 'Loading...' ? '---' : (dashState?.total_logs || 0).toLocaleString()}
+          </div>
         </div>
         <div className="card">
           <div className="card-title">Anomalous Behaviors Detected</div>
-          <div className="metric-value danger">{(dashState?.total_anomalies || 0).toLocaleString()}</div>
+          <div className="metric-value danger">
+            {dashState.status === 'Loading...' ? '---' : (dashState?.total_anomalies || 0).toLocaleString()}
+          </div>
         </div>
         <div className="card">
           <div className="card-title">Current Threat Risk Indicator</div>
-          <div className="metric-value">{anomalyPct}%</div>
+          <div className="metric-value">
+            {dashState.status === 'Loading...' ? '---' : `${anomalyPct}%`}
+          </div>
         </div>
       </div>
 
