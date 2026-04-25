@@ -51,6 +51,9 @@ from database import (
     create_password_reset_request,
     get_pending_password_resets,
     resolve_password_reset,
+    save_telemetry_log,
+    get_telemetry_logs,
+    update_log_action,
     mongodb_connected,
     ROLE_ACCESS_MAP,
 )
@@ -230,6 +233,9 @@ async def _event_stream_simulator():
             if len(state["all_logs"]) > 100:
                 state["all_logs"].pop()
 
+            # Persist to database
+            save_telemetry_log(entry)
+
             state["system_activity_chart"][-1]["normal_activity"] += 1
 
             if is_threat:
@@ -296,6 +302,10 @@ class ForgotPasswordRequest(BaseModel):
 
 class ResetPasswordAdminRequest(BaseModel):
     username: str
+
+class LogActionRequest(BaseModel):
+    log_id: str
+    action: str  # "resolved" | "escalated"
 
 
 # ─────────────────────────────────────────────
@@ -920,7 +930,27 @@ def export_report_csv(current_user: dict = Depends(_require_manager)):
 @app.get("/api/logs", tags=["Analytics"])
 def get_all_logs(current_user: dict = Depends(require_permission("Logs"))):
     log_operation(current_user["username"], "VIEW_LOGS")
+    # Fetch from DB for persistence, fallback to state
+    db_logs = get_telemetry_logs(limit=100)
+    if db_logs:
+        return db_logs
     return state["all_logs"]
+
+
+@app.post("/api/logs/action", tags=["Analytics"])
+def log_action(request: LogActionRequest, current_user: dict = Depends(require_permission("Logs"))):
+    """Save an analyst action (Resolve/Escalate) to the database."""
+    success = update_log_action(request.log_id, request.action)
+    
+    # Also update in-memory state for immediate feedback
+    for log in state["all_logs"]:
+        if log["id"] == request.log_id:
+            log["action_status"] = request.action
+            break
+
+    log_operation(current_user["username"], f"LOG_ACTION_{request.action.upper()}", {"log_id": request.log_id})
+    
+    return {"message": f"Log {request.log_id} marked as {request.action}", "success": success}
 
 
 @app.get("/api/overview/audit", tags=["Analytics"])

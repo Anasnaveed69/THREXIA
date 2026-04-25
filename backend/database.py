@@ -308,3 +308,35 @@ def resolve_password_reset(username: str) -> bool:
         col.delete_many({"username": username})
         return True
     return True
+
+# ─────────────────────────────────────────────
+#  Telemetry Logs (Persisted)
+# ─────────────────────────────────────────────
+
+def save_telemetry_log(entry: dict) -> None:
+    """Persist a simulated telemetry log to MongoDB."""
+    col = db["telemetry_logs"] if (db is not None and mongodb_connected) else None
+    if col is not None:
+        # Check if log already exists by ID to avoid duplicates in loops
+        if not col.find_one({"id": entry["id"]}):
+            col.insert_one(entry)
+    else:
+        # Fallback to state (handled in main.py)
+        pass
+
+def get_telemetry_logs(limit: int = 100) -> list[dict]:
+    """Retrieve telemetry logs from the database."""
+    col = db["telemetry_logs"] if (db is not None and mongodb_connected) else None
+    if col is not None:
+        logs = list(col.find({}, {"_id": 0}).sort("time", DESCENDING).limit(limit))
+        return logs
+    return []
+
+def update_log_action(log_id: str, action: str) -> bool:
+    """Update the action status (Resolved/Escalated) for a telemetry log."""
+    col = db["telemetry_logs"] if (db is not None and mongodb_connected) else None
+    if col is not None:
+        result = col.update_one({"id": log_id}, {"$set": {"action_status": action}})
+        return result.modified_count > 0
+    return False
+
