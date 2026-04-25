@@ -4,6 +4,7 @@ AI-Powered Insider Threat Intelligence Platform
 """
 
 from fastapi import FastAPI, BackgroundTasks, HTTPException, Depends, UploadFile, File
+from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr
@@ -13,6 +14,7 @@ import os
 import random
 import secrets
 import string
+import json
 from datetime import datetime, timedelta
 import asyncio
 import jwt
@@ -724,7 +726,7 @@ def get_dashboard_data(current_user: dict = Depends(verify_token)):
         recent_chart = state["system_activity_chart"][-7:] if len(state["system_activity_chart"]) >= 7 else state["system_activity_chart"]
         weekly_threats = sum(p.get("suspicious_activity", 0) for p in recent_chart)
 
-        return {
+        res = {
             "status":               "Running AI Model" if model else "Model Offline",
             "total_logs":           total_logs,
             "total_anomalies":      total_anomalies,
@@ -739,9 +741,10 @@ def get_dashboard_data(current_user: dict = Depends(verify_token)):
             "weekly_threats":       weekly_threats,
             "model_status":         "ONLINE" if model else "OFFLINE",
         }
+        return Response(content=json.dumps(res), media_type="application/json")
     except Exception as e:
         print(f"[DASHBOARD ERROR] {e}")
-        return {
+        fallback_res = {
             "status": "Fallback Mode",
             "total_logs": 5420,
             "total_anomalies": 0,
@@ -749,6 +752,7 @@ def get_dashboard_data(current_user: dict = Depends(verify_token)):
             "latest_alerts": [],
             "error": str(e)
         }
+        return Response(content=json.dumps(fallback_res), media_type="application/json")
 
 
 # ─────────────────────────────────────────────
