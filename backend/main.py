@@ -679,65 +679,76 @@ def change_password(request: ChangePasswordRequest, current_user: dict = Depends
 
 @app.get("/api/dashboard", tags=["Analytics"])
 def get_dashboard_data(current_user: dict = Depends(verify_token)):
-    user_access = current_user.get("access_level", [])
-    if "Dashboard" not in user_access and "Overview" not in user_access and current_user.get("role") != "Security Analyst":
-        raise HTTPException(status_code=403, detail="Access Denied: No intelligence clearance.")
-
-    log_operation(current_user["username"], "VIEW_DASHBOARD")
-
-    # Get counts directly from MongoDB and combine with fixed baseline
     try:
-        all_telemetry = get_telemetry_logs(limit=100000)
-        # We use a FIXED baseline so the count never jumps back or double-counts
-        BASELINE_LOGS = 5420
-        total_logs = BASELINE_LOGS + len(all_telemetry)
-        total_anomalies = sum(1 for log in all_telemetry if log.get("type") == "threat")
-    except Exception:
-        total_logs = state["total_logs_analyzed"]
-        total_anomalies = state["total_anomalies"]
+        user_access = current_user.get("access_level", [])
+        if "Dashboard" not in user_access and "Overview" not in user_access:
+            raise HTTPException(status_code=403, detail="Access Denied: No intelligence clearance.")
 
-    # ── Executive Metrics (for IT Manager / SysAdmin) ─────────────────────────
-    neutralization_rate = round(100.0 - ((total_anomalies / max(total_logs, 1)) * 100), 2)
-    neutralization_rate = max(0.0, min(100.0, neutralization_rate))
+        log_operation(current_user["username"], "VIEW_DASHBOARD")
 
-    # System integrity score: A+ → F based on anomaly density
-    anomaly_pct = (total_anomalies / max(total_logs, 1)) * 100
-    if anomaly_pct < 2:   integrity_score = "A+"
-    elif anomaly_pct < 5: integrity_score = "A"
-    elif anomaly_pct < 10: integrity_score = "B"
-    elif anomaly_pct < 20: integrity_score = "C"
-    else:                  integrity_score = "D"
+        # Get counts directly from MongoDB and combine with fixed baseline
+        try:
+            # Limit to 5000 to keep it fast
+            all_telemetry = get_telemetry_logs(limit=5000)
+            BASELINE_LOGS = 5420
+            total_logs = BASELINE_LOGS + len(all_telemetry)
+            total_anomalies = sum(1 for log in all_telemetry if log.get("type") == "threat")
+        except Exception as db_err:
+            print(f"[DASHBOARD DEBUG] Database error: {db_err}")
+            total_logs = state["total_logs_analyzed"]
+            total_anomalies = state["total_anomalies"]
 
-    all_users     = get_all_users()
-    active_users  = [u for u in all_users if u.get("status") == "active"]
-    pending_users = [u for u in all_users if u.get("status") == "pending"]
+        # ── Executive Metrics (for IT Manager / SysAdmin) ─────────────────────────
+        neutralization_rate = round(100.0 - ((total_anomalies / max(total_logs, 1)) * 100), 2)
+        neutralization_rate = max(0.0, min(100.0, neutralization_rate))
 
-    # Breakdown by role
-    role_breakdown = {}
-    for u in active_users:
-        role = u.get("role", "Unknown")
-        role_breakdown[role] = role_breakdown.get(role, 0) + 1
+        # System integrity score: A+ → F based on anomaly density
+        anomaly_pct = (total_anomalies / max(total_logs, 1)) * 100
+        if anomaly_pct < 2:   integrity_score = "A+"
+        elif anomaly_pct < 5: integrity_score = "A"
+        elif anomaly_pct < 10: integrity_score = "B"
+        elif anomaly_pct < 20: integrity_score = "C"
+        else:                  integrity_score = "D"
 
-    # Recent 7-day alert trend (simulated from chart data)
-    recent_chart = state["system_activity_chart"][-7:] if len(state["system_activity_chart"]) >= 7 else state["system_activity_chart"]
-    weekly_threats = sum(p.get("suspicious_activity", 0) for p in recent_chart)
+        all_users     = get_all_users()
+        active_users  = [u for u in all_users if u.get("status") == "active"]
+        pending_users = [u for u in all_users if u.get("status") == "pending"]
 
-    return {
-        "status":               "Running AI Model" if model else "Model Offline",
-        "total_logs":           total_logs,
-        "total_anomalies":      total_anomalies,
-        "chart_data":           state["system_activity_chart"],
-        "latest_alerts":        state["live_alerts"][:5],
-        "user":                 current_user,
-        # Executive intelligence fields
-        "neutralization_rate":  neutralization_rate,
-        "integrity_score":      integrity_score,
-        "active_users_count":   len(active_users),
-        "pending_users_count":  len(pending_users),
-        "role_breakdown":       role_breakdown,
-        "weekly_threats":       weekly_threats,
-        "model_status":         "ONLINE" if model else "OFFLINE",
-    }
+        # Breakdown by role
+        role_breakdown = {}
+        for u in active_users:
+            role = u.get("role", "Unknown")
+            role_breakdown[role] = role_breakdown.get(role, 0) + 1
+
+        # Recent 7-day alert trend (simulated from chart data)
+        recent_chart = state["system_activity_chart"][-7:] if len(state["system_activity_chart"]) >= 7 else state["system_activity_chart"]
+        weekly_threats = sum(p.get("suspicious_activity", 0) for p in recent_chart)
+
+        return {
+            "status":               "Running AI Model" if model else "Model Offline",
+            "total_logs":           total_logs,
+            "total_anomalies":      total_anomalies,
+            "chart_data":           state["system_activity_chart"],
+            "latest_alerts":        state["live_alerts"][:5],
+            "user":                 current_user,
+            "neutralization_rate":  neutralization_rate,
+            "integrity_score":      integrity_score,
+            "active_users_count":   len(active_users),
+            "pending_users_count":  len(pending_users),
+            "role_breakdown":       role_breakdown,
+            "weekly_threats":       weekly_threats,
+            "model_status":         "ONLINE" if model else "OFFLINE",
+        }
+    except Exception as e:
+        print(f"[DASHBOARD ERROR] {e}")
+        return {
+            "status": "Fallback Mode",
+            "total_logs": 5420,
+            "total_anomalies": 0,
+            "chart_data": state["system_activity_chart"],
+            "latest_alerts": [],
+            "error": str(e)
+        }
 
 
 # ─────────────────────────────────────────────
