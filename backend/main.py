@@ -56,6 +56,7 @@ from database import (
     update_log_action,
     mongodb_connected,
     ROLE_ACCESS_MAP,
+    telemetry_logs_col,
 )
 from email_service import (
     notify_admin_new_request,
@@ -691,9 +692,12 @@ def get_dashboard_data(current_user: dict = Depends(verify_token)):
 
     # Direct sync with MongoDB (same as Logs page)
     try:
-        from database import telemetry_logs
-        total_logs = telemetry_logs.count_documents({})
-        total_anomalies = telemetry_logs.count_documents({"type": "threat"})
+        if telemetry_logs_col is not None:
+            total_logs = telemetry_logs_col.count_documents({})
+            total_anomalies = telemetry_logs_col.count_documents({"type": "threat"})
+        else:
+            total_logs      = state["total_logs_analyzed"]
+            total_anomalies = state["total_anomalies"]
         
         # Absolute safety: If DB is fresh, use seeded baseline
         if total_logs < 100:

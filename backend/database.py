@@ -28,6 +28,10 @@ MONGO_URI = _normalize_mongo_uri(MONGO_URI)
 
 db              = None
 mongodb_connected = False
+users_col         = None
+audit_logs_col    = None
+telemetry_logs_col = None
+password_resets_col = None
 
 try:
     client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
@@ -41,6 +45,13 @@ try:
     db["users"].create_index("status")
     db["audit_logs"].create_index([("timestamp", DESCENDING)])
     db["audit_logs"].create_index("username")
+
+    # ── Initialize Collection References ──
+    global users_col, audit_logs_col, telemetry_logs_col, password_resets_col
+    users_col           = db["users"]
+    audit_logs_col      = db["audit_logs"]
+    telemetry_logs_col  = db["telemetry_logs"]
+    password_resets_col = db["password_resets"]
 
     print("[SUCCESS] Connected to MongoDB — indexes verified.")
 except (ServerSelectionTimeoutError, Exception) as e:
