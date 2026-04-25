@@ -206,7 +206,7 @@ async def _event_stream_simulator():
 
         state["total_logs_analyzed"] += 1
         log_id    = f"LOG-{random.randint(10000,99999)}"
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        timestamp = datetime.utcnow().isoformat() + "Z"
         user      = random.choice(state["users"]) if state["users"] else "system"
 
         # Determine threat status (use model if available, otherwise random fallback)
@@ -689,21 +689,18 @@ def get_dashboard_data(current_user: dict = Depends(verify_token)):
 
     log_operation(current_user["username"], "VIEW_DASHBOARD")
 
-    # Sync with MongoDB for accurate counts
-    from database import telemetry_logs
-    if telemetry_logs is not None:
-        try:
-            total_logs = telemetry_logs.count_documents({})
-            total_anomalies = telemetry_logs.count_documents({"type": "threat"})
-            
-            # If DB is empty, use the simulator's progress
-            if total_logs == 0:
-                total_logs = state["total_logs_analyzed"]
-                total_anomalies = state["total_anomalies"]
-        except:
-            total_logs = state["total_logs_analyzed"]
+    # Robust sync with MongoDB
+    try:
+        from database import get_telemetry_logs, telemetry_logs
+        db_count = telemetry_logs.count_documents({}) if telemetry_logs is not None else 0
+        total_logs = max(db_count, state["total_logs_analyzed"])
+        
+        # Count anomalies from DB
+        total_anomalies = telemetry_logs.count_documents({"type": "threat"}) if telemetry_logs is not None else 0
+        if total_anomalies == 0 and total_logs > 0:
             total_anomalies = state["total_anomalies"]
-    else:
+    except Exception as e:
+        print(f"[DASHBOARD ERROR] DB sync failed: {e}")
         total_logs      = state["total_logs_analyzed"]
         total_anomalies = state["total_anomalies"]
 

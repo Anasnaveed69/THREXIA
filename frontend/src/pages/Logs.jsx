@@ -176,7 +176,7 @@ export default function Logs() {
                     <td style={{ color: 'var(--text-secondary)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         {expandedId === log.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                        {log.time}
+                        {new Date(log.time).toLocaleString([], { dateStyle: 'short', timeStyle: 'medium' })}
                       </div>
                     </td>
                     <td style={{ fontWeight: 600, color: log.type === 'threat' ? 'var(--danger-red)' : 'var(--primary-blue)' }}>{log.id}</td>
