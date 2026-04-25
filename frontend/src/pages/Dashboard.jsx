@@ -6,6 +6,7 @@ import {
   AlertTriangle, BookOpen, ShieldCheck, Activity,
   Clock, Zap, BarChart2, Lock
 } from 'lucide-react';
+import { API_BASE_URL } from '../apiConfig';
 
 // ─────────────────────────────────────────────
 //  Executive Metric Card
@@ -106,7 +107,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchState = () => {
       const token = localStorage.getItem('threxia_auth');
-      fetch('http://localhost:8000/api/dashboard', {
+      fetch(`${API_BASE_URL}/api/dashboard`, {
         headers: { 'Authorization': `Bearer ${token}` },
       })
         .then((res) => res.json())
@@ -123,7 +124,7 @@ export default function Dashboard() {
     setReportLoading(true);
     const token = localStorage.getItem('threxia_auth');
     try {
-      const res  = await fetch('http://localhost:8000/api/intelligence/report', {
+      const res  = await fetch(`${API_BASE_URL}/api/intelligence/report`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       const data = await res.json();
@@ -141,7 +142,7 @@ export default function Dashboard() {
     setExportLoading(true);
     const token = localStorage.getItem('threxia_auth');
     try {
-      const res  = await fetch('http://localhost:8000/api/intelligence/export-csv', {
+      const res  = await fetch(`${API_BASE_URL}/api/intelligence/export-csv`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       const data = await res.json();

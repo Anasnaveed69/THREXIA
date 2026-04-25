@@ -13,8 +13,9 @@ import Sparklines from '../components/Sparklines';
 import DecryptedText from '../components/DecryptedText';
 import ShinyText from '../components/ShinyText';
 import StarBorder from '../components/StarBorder';
+import { API_BASE_URL } from '../apiConfig';
 
-const API = 'http://localhost:8000';
+const API = API_BASE_URL;
 
 /* ─── Role definitions ──────────────────────────────────────── */
 const ALL_MODULES = [

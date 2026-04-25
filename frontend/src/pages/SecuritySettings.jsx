@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Lock, ShieldCheck, ShieldAlert, Key, ArrowRight, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { API_BASE_URL } from '../apiConfig';
 
 const SecuritySettings = () => {
     const [formData, setFormData] = useState({
@@ -25,7 +26,7 @@ const SecuritySettings = () => {
 
         const token = localStorage.getItem('threxia_auth');
         try {
-            const response = await fetch('http://localhost:8000/api/user/change-password', {
+            const response = await fetch(`${API_BASE_URL}/api/user/change-password`, {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',

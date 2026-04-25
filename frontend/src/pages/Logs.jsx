@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AlertCircle, ChevronDown, ChevronUp, Radio, Activity, Terminal, CheckCircle2, ArrowUpCircle, Shield } from 'lucide-react';
+import { API_BASE_URL } from '../apiConfig';
 import { motion, AnimatePresence } from 'framer-motion';
 import StarBorder from '../components/StarBorder';
 
@@ -38,7 +39,7 @@ export default function Logs() {
   useEffect(() => {
     const fetchLogs = () => {
       const token = localStorage.getItem('threxia_auth');
-      fetch('http://localhost:8000/api/logs', {
+      fetch(`${API_BASE_URL}/api/logs`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
         .then(res => res.json())

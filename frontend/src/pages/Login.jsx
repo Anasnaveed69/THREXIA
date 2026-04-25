@@ -2,6 +2,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useState } from 'react';
 import { Eye, EyeOff, Lock, User, AlertTriangle, Clock, ShieldX } from 'lucide-react';
 import PrismaticBurst from '../components/PrismaticBurst';
+import { API_BASE_URL } from '../apiConfig';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -16,7 +17,7 @@ export default function Login() {
     setError('');
     setErrorType('');
     try {
-      const response = await fetch('http://localhost:8000/api/login', {
+      const response = await fetch(`${API_BASE_URL}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
