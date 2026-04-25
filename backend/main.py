@@ -56,7 +56,6 @@ from database import (
     update_log_action,
     mongodb_connected,
     ROLE_ACCESS_MAP,
-    telemetry_logs_col,
 )
 from email_service import (
     notify_admin_new_request,
@@ -690,21 +689,16 @@ def get_dashboard_data(current_user: dict = Depends(verify_token)):
 
     log_operation(current_user["username"], "VIEW_DASHBOARD")
 
-    # Direct sync with MongoDB (same as Logs page)
+    # Get counts directly from MongoDB via the existing helper
     try:
-        if telemetry_logs_col is not None:
-            total_logs = telemetry_logs_col.count_documents({})
-            total_anomalies = telemetry_logs_col.count_documents({"type": "threat"})
-        else:
-            total_logs      = state["total_logs_analyzed"]
-            total_anomalies = state["total_anomalies"]
-        
-        # Absolute safety: If DB is fresh, use seeded baseline
+        all_telemetry = get_telemetry_logs(limit=100000)
+        total_logs = len(all_telemetry)
+        total_anomalies = sum(1 for log in all_telemetry if log.get("type") == "threat")
         if total_logs < 100:
             total_logs = state["total_logs_analyzed"]
             total_anomalies = state["total_anomalies"]
-    except Exception as e:
-        total_logs      = state["total_logs_analyzed"]
+    except Exception:
+        total_logs = state["total_logs_analyzed"]
         total_anomalies = state["total_anomalies"]
 
     # ── Executive Metrics (for IT Manager / SysAdmin) ─────────────────────────
