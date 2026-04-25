@@ -684,7 +684,7 @@ def change_password(request: ChangePasswordRequest, current_user: dict = Depends
 @app.get("/api/dashboard", tags=["Analytics"])
 def get_dashboard_data(current_user: dict = Depends(verify_token)):
     user_access = current_user.get("access_level", [])
-    if "Dashboard" not in user_access and "Overview" not in user_access:
+    if "Dashboard" not in user_access and "Overview" not in user_access and current_user.get("role") != "Security Analyst":
         raise HTTPException(status_code=403, detail="Access Denied: No intelligence clearance.")
 
     log_operation(current_user["username"], "VIEW_DASHBOARD")
@@ -772,8 +772,24 @@ def generate_intelligence_report(current_user: dict = Depends(_require_manager))
     Generate a comprehensive security intelligence report for IT Managers and System Administrators.
     Returns structured data for dashboard display and CSV export.
     """
-    total_logs      = state["total_logs_analyzed"]
-    total_anomalies = state["total_anomalies"]
+    # Sync with MongoDB for accurate counts
+    from database import telemetry_logs
+    if telemetry_logs is not None:
+        try:
+            total_logs = telemetry_logs.count_documents({})
+            total_anomalies = telemetry_logs.count_documents({"type": "threat"})
+            
+            # Fallback to state if DB is empty (initial deployment)
+            if total_logs == 0:
+                total_logs = state["total_logs_analyzed"]
+                total_anomalies = state["total_anomalies"]
+        except:
+            total_logs = state["total_logs_analyzed"]
+            total_anomalies = state["total_anomalies"]
+    else:
+        total_logs      = state["total_logs_analyzed"]
+        total_anomalies = state["total_anomalies"]
+
     total_normal    = total_logs - total_anomalies
 
     anomaly_pct         = round((total_anomalies / max(total_logs, 1)) * 100, 2)

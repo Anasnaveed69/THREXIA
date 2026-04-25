@@ -100,8 +100,8 @@ export default function Dashboard() {
   const role = localStorage.getItem('threxia_role') || 'User';
   const isManager   = role === 'IT Manager';
   const isAdmin     = role === 'System Administrator';
-  const isManagerOrAdmin = isManager || isAdmin;
   const isAnalyst   = role === 'Security Analyst';
+  const isManagerOrAdmin = isManager || isAdmin || isAnalyst;
 
   // ── Fetch live dashboard state every 3s ──────────────────────────────────
   useEffect(() => {
