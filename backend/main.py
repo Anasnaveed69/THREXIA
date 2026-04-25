@@ -131,10 +131,14 @@ def require_permission(permission: str):
 # ─────────────────────────────────────────────
 #  ML Model Loading
 # ─────────────────────────────────────────────
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "models", "threxia_model.joblib")
+SCALER_PATH = os.path.join(BASE_DIR, "models", "threxia_scaler.joblib")
+
 try:
-    model  = joblib.load("models/threxia_model.joblib")
-    scaler = joblib.load("models/threxia_scaler.joblib")
-    print("[SUCCESS] ML model and scaler loaded.")
+    model  = joblib.load(MODEL_PATH)
+    scaler = joblib.load(SCALER_PATH)
+    print(f"[SUCCESS] ML model loaded from {MODEL_PATH}")
 except Exception as e:
     model = scaler = None
     print(f"[WARNING] ML model offline: {e}")
@@ -205,46 +209,50 @@ async def _event_stream_simulator():
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         user      = random.choice(state["users"]) if state["users"] else "system"
 
+        # Determine threat status (use model if available, otherwise random fallback)
         if model and scaler:
-            arr        = np.array(features).reshape(1, -1)
-            scaled     = scaler.transform(arr)
-            prediction = int(model.predict(scaled)[0])
-            raw_score  = model.score_samples(scaled)[0]
+            try:
+                arr        = np.array(features).reshape(1, -1)
+                scaled     = scaler.transform(arr)
+                prediction = int(model.predict(scaled)[0])
+                raw_score  = model.score_samples(scaled)[0]
+                is_threat  = (prediction == -1)
+                confidence = round(min(99.9, 85.0 + abs(raw_score) * 0.5) if is_threat else min(99.9, max(50.0, (raw_score / 350.0) * 100)), 1)
+            except Exception as e:
+                is_threat = anomalous
+                confidence = 85.0 if is_threat else 95.0
+        else:
+            is_threat = anomalous
+            confidence = 0.0 # Indication that AI model is offline (fallback active)
 
-            if prediction == -1:
-                confidence = min(99.9, 85.0 + abs(raw_score) * 0.5 + random.uniform(0, 5))
-            else:
-                confidence = min(99.9, max(50.0, (raw_score / 350.0) * 100))
+        explanations = _interpret_anomaly(features) if is_threat else ["Behavior falls within normal operational parameters."]
 
-            is_threat    = (prediction == -1)
-            explanations = _interpret_anomaly(features) if is_threat else ["Behavior falls within normal operational parameters."]
+        entry = {
+            "id":               log_id,
+            "time":             timestamp,
+            "user":             user,
+            "confidence_score": confidence,
+            "explanations":     explanations,
+            "type":             "threat" if is_threat else "safe",
+            "status":           "Suspicious" if is_threat else "Normal",
+            "features":         features,
+        }
 
-            entry = {
-                "id":               log_id,
-                "time":             timestamp,
-                "user":             user,
-                "confidence_score": round(confidence, 1),
-                "explanations":     explanations,
-                "type":             "threat" if is_threat else "safe",
-                "status":           "Suspicious" if is_threat else "Normal",
-                "features":         features,
-            }
+        state["all_logs"].insert(0, entry)
+        if len(state["all_logs"]) > 100:
+            state["all_logs"].pop()
 
-            state["all_logs"].insert(0, entry)
-            if len(state["all_logs"]) > 100:
-                state["all_logs"].pop()
+        # Persist to database
+        save_telemetry_log(entry)
 
-            # Persist to database
-            save_telemetry_log(entry)
+        state["system_activity_chart"][-1]["normal_activity"] += 1
 
-            state["system_activity_chart"][-1]["normal_activity"] += 1
-
-            if is_threat:
-                state["total_anomalies"] += 1
-                state["system_activity_chart"][-1]["suspicious_activity"] += 1
-                state["live_alerts"].insert(0, entry)
-                if len(state["live_alerts"]) > 50:
-                    state["live_alerts"].pop()
+        if is_threat:
+            state["total_anomalies"] += 1
+            state["system_activity_chart"][-1]["suspicious_activity"] += 1
+            state["live_alerts"].insert(0, entry)
+            if len(state["live_alerts"]) > 50:
+                state["live_alerts"].pop()
 
 
 @app.on_event("startup")
@@ -681,8 +689,23 @@ def get_dashboard_data(current_user: dict = Depends(verify_token)):
 
     log_operation(current_user["username"], "VIEW_DASHBOARD")
 
-    total_logs      = state["total_logs_analyzed"]
-    total_anomalies = state["total_anomalies"]
+    # Sync with MongoDB for accurate counts
+    from database import telemetry_logs
+    if telemetry_logs is not None:
+        try:
+            total_logs = telemetry_logs.count_documents({})
+            total_anomalies = telemetry_logs.count_documents({"type": "threat"})
+            
+            # If DB is empty, use the simulator's progress
+            if total_logs == 0:
+                total_logs = state["total_logs_analyzed"]
+                total_anomalies = state["total_anomalies"]
+        except:
+            total_logs = state["total_logs_analyzed"]
+            total_anomalies = state["total_anomalies"]
+    else:
+        total_logs      = state["total_logs_analyzed"]
+        total_anomalies = state["total_anomalies"]
 
     # ── Executive Metrics (for IT Manager / SysAdmin) ─────────────────────────
     neutralization_rate = round(100.0 - ((total_anomalies / max(total_logs, 1)) * 100), 2)
