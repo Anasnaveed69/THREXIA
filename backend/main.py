@@ -157,8 +157,10 @@ state = {
 _now = datetime.utcnow()
 for _i in range(24):
     _dt = _now - timedelta(hours=23 - _i)
+    # Zero out minutes/seconds to align strictly to the hour block
+    _dt = _dt.replace(minute=0, second=0, microsecond=0)
     state["system_activity_chart"].append({
-        "time":               _dt.strftime("%H:00"),
+        "time":               _dt.isoformat() + "Z",
         "normal_activity":    random.randint(50, 150),
         "suspicious_activity": random.randint(0, 2),
     })
@@ -244,11 +246,13 @@ async def _event_stream_simulator():
         save_telemetry_log(entry)
 
         # Advance the chart time dynamically
-        current_hour = datetime.utcnow().strftime("%H:00")
-        if state["system_activity_chart"] and state["system_activity_chart"][-1]["time"] != current_hour:
+        current_hour_dt = datetime.utcnow().replace(minute=0, second=0, microsecond=0)
+        current_hour_iso = current_hour_dt.isoformat() + "Z"
+
+        if state["system_activity_chart"] and state["system_activity_chart"][-1]["time"] != current_hour_iso:
             state["system_activity_chart"].pop(0)
             state["system_activity_chart"].append({
-                "time": current_hour,
+                "time": current_hour_iso,
                 "normal_activity": 0,
                 "suspicious_activity": 0
             })
@@ -978,11 +982,13 @@ def export_report_csv(current_user: dict = Depends(_require_manager)):
 @app.get("/api/logs", tags=["Analytics"])
 def get_all_logs(current_user: dict = Depends(require_permission("Logs"))):
     log_operation(current_user["username"], "VIEW_LOGS")
-    # Fetch from DB for persistence, fallback to state
-    db_logs = get_telemetry_logs(limit=100)
-    if db_logs:
-        return db_logs
-    return state["all_logs"]
+    try:
+        db_logs = get_telemetry_logs(limit=5000)
+        logs_to_return = db_logs if db_logs else state["all_logs"]
+        return Response(content=json.dumps(logs_to_return), media_type="application/json")
+    except Exception as e:
+        print(f"[LOGS ERROR] {e}")
+        return Response(content=json.dumps(state["all_logs"]), media_type="application/json")
 
 
 @app.post("/api/logs/action", tags=["Analytics"])

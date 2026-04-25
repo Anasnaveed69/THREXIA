@@ -60,9 +60,13 @@ function RecommendationCard({ rec }) {
 // ─────────────────────────────────────────────
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
+    let displayTime = label;
+    try {
+      displayTime = new Date(label).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch (e) { /* ignore */ }
     return (
       <div className="chart-tooltip">
-        <p className="chart-tooltip-label">{label}</p>
+        <p className="chart-tooltip-label">{displayTime}</p>
         {payload.map((p) => (
           <div key={p.name} style={{ color: p.color, fontWeight: 600, fontSize: '0.8rem' }}>
             {p.name}: {p.value}
@@ -258,7 +262,17 @@ export default function Dashboard() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.04)" />
-                  <XAxis dataKey="time" stroke="#64748B" fontSize={11} tickLine={false} axisLine={false} />
+                  <XAxis 
+                    dataKey="time" 
+                    stroke="#64748B" 
+                    fontSize={11} 
+                    tickLine={false} 
+                    axisLine={false} 
+                    tickFormatter={(timeStr) => {
+                      try { return new Date(timeStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); } 
+                      catch(e) { return timeStr; }
+                    }}
+                  />
                   <YAxis stroke="#64748B" fontSize={11} tickLine={false} axisLine={false} width={30} />
                   <Tooltip content={<CustomTooltip />} />
                   <Area type="monotone" name="Normal"     dataKey="normal_activity"     stroke="#3B82F6" strokeWidth={2} fillOpacity={1} fill="url(#rNorm)" />
@@ -382,8 +396,18 @@ export default function Dashboard() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="time"             stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis                            stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} />
+                <XAxis 
+                  dataKey="time" 
+                  stroke="#64748B" 
+                  fontSize={12} 
+                  tickLine={false} 
+                  axisLine={false} 
+                  tickFormatter={(timeStr) => {
+                    try { return new Date(timeStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); } 
+                    catch(e) { return timeStr; }
+                  }}
+                />
+                <YAxis stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip content={<CustomTooltip />} />
                 <Area type="monotone" name="Normal Activity"       dataKey="normal_activity"    stroke="#2563EB" strokeWidth={2} fillOpacity={1} fill="url(#colorNormal)" />
                 <Area type="monotone" name="Suspicious Deviations" dataKey="suspicious_activity" stroke="#EF4444" strokeWidth={2} fillOpacity={1} fill="url(#colorThreat)" />
