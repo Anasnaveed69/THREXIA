@@ -63,72 +63,112 @@ def _base_template(content: str) -> str:
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <style>
-        body {{ margin:0; padding:0; background:#05050A; font-family:'Inter','Segoe UI',Arial,sans-serif; color:#E2E8F0; }}
-        .wrapper {{ max-width:600px; margin:0 auto; padding:60px 20px; }}
-        .header {{
-          background: #0D0B1A;
-          padding:40px;
-          text-align:center;
-          border-radius:24px 24px 0 0;
-          border: 1px solid rgba(139,92,246,0.1);
-          border-bottom: none;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap');
+        
+        body {{ 
+            margin: 0; padding: 0; background-color: #030305; 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            color: #94A3B8; -webkit-font-smoothing: antialiased; 
         }}
-        .logo-text {{ font-size:32px; font-weight:900; letter-spacing:0.3em; color:#fff; text-shadow:0 0 30px rgba(139,92,246,0.5); margin: 0; }}
-        .logo-sub  {{ font-size:11px; color:#8B5CF6; letter-spacing:0.4em; text-transform:uppercase; margin-top:8px; font-weight: 600; }}
-        .body      {{ 
-            background:#0D0B1A; 
-            border: 1px solid rgba(139,92,246,0.1); 
-            border-top: none; 
-            padding:40px;
-            border-radius: 0 0 24px 24px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        .email-container {{ max-width: 600px; margin: 40px auto; background-color: #0A0A0F; border-radius: 24px; overflow: hidden; border: 1px solid #1E1E26; box-shadow: 0 40px 100px rgba(0,0,0,0.6); }}
+        
+        /* Header Section */
+        .header {{ background: linear-gradient(180deg, #0D0D14 0%, #0A0A0F 100%); padding: 48px 40px 32px; text-align: center; border-bottom: 1px solid #1E1E26; position: relative; }}
+        .header-top {{ display: flex; align-items: center; justify-content: center; margin-bottom: 24px; }}
+        .logo-box {{ 
+            display: inline-block; padding: 12px; border-radius: 12px; background: rgba(139, 92, 246, 0.1); 
+            border: 1px solid rgba(139, 92, 246, 0.2); margin-bottom: 16px;
         }}
-        .body h2   {{ color:#fff; font-size:24px; margin:0 0 20px; font-weight: 800; display: flex; align-items: center; gap: 10px; }}
-        .body p    {{ color:#94A3B8; font-size:15px; line-height:1.8; margin:0 0 20px; }}
-        .badge {{
-          display:inline-block; background:rgba(139,92,246,0.1); border:1px solid rgba(139,92,246,0.3);
-          color:#A78BFA; padding:6px 14px; border-radius:6px; font-size:11px; font-weight:800;
-          letter-spacing:0.1em; text-transform:uppercase;
+        .logo-text {{ font-size: 32px; font-weight: 800; letter-spacing: 0.15em; color: #FFFFFF; margin: 0; text-transform: uppercase; }}
+        .logo-sub {{ font-size: 11px; color: #A78BFA; letter-spacing: 0.4em; text-transform: uppercase; margin-top: 12px; font-weight: 700; opacity: 1; }}
+        .system-badge {{ 
+            display: inline-block; padding: 4px 12px; background: rgba(16, 185, 129, 0.1); 
+            border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 100px; 
+            color: #10B981; font-size: 10px; font-weight: 900; letter-spacing: 0.1em; margin-top: 20px;
         }}
-        .info-box {{
-          background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05);
-          border-radius:16px; padding:24px; margin:30px 0;
+        
+        /* Body Section */
+        .body {{ padding: 48px 48px 40px; }}
+        .content-heading {{ font-size: 24px; font-weight: 800; color: #FFFFFF; margin: 0 0 24px; letter-spacing: -0.02em; line-height: 1.2; }}
+        .content-text {{ font-size: 16px; line-height: 1.6; color: #94A3B8; margin-bottom: 32px; }}
+        
+        /* Information Grid */
+        .info-card {{ background: #0F0F17; border: 1px solid #1E1E26; border-radius: 16px; padding: 24px; margin: 32px 0; }}
+        .info-row {{ padding: 12px 0; border-bottom: 1px solid #1E1E26; display: block; }}
+        .info-row:last-child {{ border-bottom: none; }}
+        .info-label {{ display: block; font-size: 12px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }}
+        .info-value {{ display: block; font-size: 16px; color: #F1F5F9; font-weight: 500; }}
+        .mono {{ font-family: 'JetBrains Mono', 'Courier New', monospace; color: #C4B5FD; background: rgba(167, 139, 250, 0.1); padding: 2px 6px; border-radius: 4px; font-weight: 600; }}
+        
+        /* Button */
+        .button-wrapper {{ text-align: center; margin: 40px 0 16px; }}
+        .action-button {{ 
+            display: inline-block; background: linear-gradient(90deg, #7C3AED 0%, #3B82F6 100%); 
+            color: #FFFFFF !important; font-weight: 800; font-size: 14px; letter-spacing: 0.12em; 
+            padding: 18px 40px; border-radius: 12px; text-decoration: none; 
+            text-transform: uppercase; box-shadow: 0 20px 40px rgba(124, 58, 237, 0.2);
+            transition: all 0.3s ease;
         }}
-        .info-row  {{ display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.03); font-size:14px; }}
-        .info-row:last-child {{ border-bottom:none; }}
-        .info-label {{ color:#475569; font-weight: 600; }}
-        .info-value {{ color:#CBD5E1; font-weight:500; text-align: right; }}
-        .cta-btn {{
-          display:block; width:100%; text-align:center; 
-          background: linear-gradient(90deg, #7C3AED 0%, #3B82F6 100%);
-          color:#fff; font-weight:800; font-size:14px; letter-spacing:0.15em;
-          padding:20px; border-radius:12px; text-decoration:none; margin:32px 0;
-          text-transform:uppercase; box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2);
+        
+        /* Footer */
+        .footer {{ padding: 0 48px 48px; text-align: center; }}
+        .footer-divider {{ height: 1px; background: #1E1E26; margin-bottom: 32px; }}
+        .footer-text {{ font-size: 11px; color: #475569; line-height: 1.8; letter-spacing: 0.02em; }}
+        .security-stamp {{ 
+            margin-top: 24px; font-family: 'JetBrains Mono', monospace; font-size: 9px; 
+            color: #1E1E26; text-transform: uppercase; letter-spacing: 0.2em; 
         }}
-        .footer {{ text-align:center; padding:40px 20px; color:#475569; font-size:11px; letter-spacing: 0.05em; line-height: 1.6; }}
-        .highlight {{ color:#8B5CF6; font-weight:700; }}
-        .success   {{ color:#10B981; }}
-        .danger    {{ color:#EF4444; }}
-        .mono      {{ font-family: 'Courier New', Courier, monospace; background:rgba(0,0,0,0.4); padding:4px 10px; border-radius:6px; font-size:14px; color:#A78BFA; border: 1px solid rgba(139,92,246,0.2); }}
+        
+        /* Status Colors */
+        .text-purple {{ color: #8B5CF6; }}
+        .text-success {{ color: #10B981; }}
+        .text-danger  {{ color: #EF4444; }}
+        .badge {{ 
+            display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; 
+            font-weight: 800; background: rgba(139, 92, 246, 0.1); color: #8B5CF6; 
+            border: 1px solid rgba(139, 92, 246, 0.2); 
+        }}
       </style>
     </head>
     <body>
-      <div class="wrapper">
+      <div class="email-container">
         <div class="header">
+          <div style="margin-bottom: 20px;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block;">
+                <path d="M12 2L3 7V12C3 17.41 6.84 22.38 12 24C17.16 22.38 21 17.41 21 12V7L12 2Z" fill="url(#logo-grad)" />
+                <path d="M9 12L11 14L15 10" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                <defs>
+                    <linearGradient id="logo-grad" x1="3" y1="2" x2="21" y2="24" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#7C3AED" />
+                        <stop offset="1" stop-color="#3B82F6" />
+                    </linearGradient>
+                </defs>
+            </svg>
+          </div>
           <h1 class="logo-text">THREXIA</h1>
-          <div class="logo-sub">Advanced Threat Intelligence Platform</div>
+          <div class="logo-sub">Advanced Intelligence Platform</div>
+          <div class="system-badge">SYSTEM STATUS: SECURE</div>
         </div>
+        
         <div class="body">
           {content}
         </div>
+        
         <div class="footer">
-          © {datetime.utcnow().year} THREXIA · FAST-NU Lahore · All rights reserved<br>
-          This is an automated security notification. Do not reply to this email.
+          <div class="footer-divider"></div>
+          <p class="footer-text">
+            © {datetime.utcnow().year} THREXIA Core · FAST-NU Intelligence Lab<br/>
+            All data encrypted via AES-256 standards. Confidentiality strictly enforced.
+          </p>
+          <div class="security-stamp">
+            VERIFICATION_ID: {datetime.utcnow().strftime('%H%M%S')}-TX-INTEL-SEC
+          </div>
         </div>
       </div>
     </body>
     </html>
     """
+
 
 
 def notify_admin_new_request(
@@ -140,42 +180,45 @@ def notify_admin_new_request(
 ) -> bool:
     """Alert the system administrator about a new access request."""
     content = f"""
-      <h2>🔔 New Access Request</h2>
-      <p>A new operator has submitted an access clearance request to the THREXIA platform and is awaiting your review.</p>
+      <h2 class="content-heading">🔔 Inbound Access Request</h2>
+      <p class="content-text">Neural telemetry has detected a new operator registration attempt. The following identity is awaiting administrative clearance for platform ingestion.</p>
 
-      <div class="info-box">
+      <div class="info-card">
         <div class="info-row">
           <span class="info-label">Full Name</span>
           <span class="info-value">{full_name}</span>
         </div>
         <div class="info-row">
-          <span class="info-label">Username</span>
-          <span class="info-value"><span class="mono">{username}</span></span>
+          <span class="info-label">Identification</span>
+          <span class="info-value"><span class="mono">@{username}</span></span>
         </div>
         <div class="info-row">
-          <span class="info-label">Email</span>
+          <span class="info-label">Communication Channel</span>
           <span class="info-value">{email}</span>
         </div>
         <div class="info-row">
-          <span class="info-label">Requested Role</span>
+          <span class="info-label">Requested Authorization</span>
           <span class="info-value"><span class="badge">{role}</span></span>
         </div>
         <div class="info-row">
-          <span class="info-label">Justification</span>
-          <span class="info-value" style="max-width:300px;text-align:right;">{reason}</span>
+          <span class="info-label">Operational Justification</span>
+          <span class="info-value">{reason}</span>
         </div>
         <div class="info-row">
-          <span class="info-label">Submitted At</span>
-          <span class="info-value">{datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}</span>
+          <span class="info-label">Detection Timestamp</span>
+          <span class="info-value">{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}</span>
         </div>
       </div>
 
-      <p>Log in as a <span class="highlight">System Administrator</span> to review this request from the <strong>Access Control</strong> dashboard.</p>
-      <a class="cta-btn" href="http://localhost:5173/admin/access-control">Review in THREXIA Dashboard →</a>
+      <p class="content-text">Proceed to the <strong>Access Control</strong> module to authorize or terminate this request. Standard security protocols apply.</p>
+      
+      <div class="button-wrapper">
+        <a class="action-button" href="http://localhost:5173/admin/access-control">Open Command Center →</a>
+      </div>
 
-      <p style="font-size:13px;color:#475569;">If you did not expect this request, you may safely ignore this notification.</p>
+      <p style="font-size:12px;color:#475569;margin-top:24px;text-align:center;">This request was captured via the public registration gateway.</p>
     """
-    return _send(ADMIN_EMAIL, f"[THREXIA] New Access Request — {full_name} ({role})", _base_template(content))
+    return _send(ADMIN_EMAIL, f"[THREXIA] Access Request: {full_name} ({role})", _base_template(content))
 
 
 def notify_user_approved(
@@ -187,34 +230,35 @@ def notify_user_approved(
 ) -> bool:
     """Notify the user that their account has been approved with credentials."""
     content = f"""
-      <h2>✅ Access Granted — Welcome to THREXIA</h2>
-      <p>Your access request has been reviewed and <span class="success">approved</span> by the System Administrator. Your intelligence clearance is now active.</p>
+      <h2 class="content-heading">✅ Clearance Granted</h2>
+      <p class="content-text">Your request for THREXIA platform access has been <span class="text-success">verified and approved</span>. Your security profile has been integrated into the central node.</p>
 
-      <div class="info-box">
+      <div class="info-card">
         <div class="info-row">
           <span class="info-label">Full Name</span>
           <span class="info-value">{full_name}</span>
         </div>
         <div class="info-row">
-          <span class="info-label">Assigned Role</span>
+          <span class="info-label">Authorization Tier</span>
           <span class="info-value"><span class="badge">{role}</span></span>
         </div>
         <div class="info-row">
-          <span class="info-label">Username</span>
+          <span class="info-label">Identification Tag</span>
           <span class="info-value"><span class="mono">{username}</span></span>
         </div>
         <div class="info-row">
-          <span class="info-label">Temporary Passcode</span>
+          <span class="info-label">Temporary Cipher</span>
           <span class="info-value"><span class="mono">{temp_password}</span></span>
         </div>
       </div>
 
-      <p>⚠️ <strong>Important:</strong> This is a system-generated temporary passcode. You must use it to log in for the first time. Keep it confidential.</p>
-      <a class="cta-btn" href="http://localhost:5173/login">Access THREXIA Platform →</a>
+      <p class="content-text"><strong>Security Protocol:</strong> This temporary cipher is valid for initial ingestion only. You are required to update your security credentials upon first entry.</p>
+      
+      <div class="button-wrapper">
+        <a class="action-button" href="http://localhost:5173/login">Initiate Secure Login →</a>
+      </div>
 
-      <p style="font-size:13px;color:#475569;">
-        If you did not request access to THREXIA, please contact the system administrator immediately at <span class="highlight">buttanas813@gmail.com</span>.
-      </p>
+      <p style="font-size:12px;color:#475569;margin-top:24px;">This is a system-level automated transmission. Please do not disseminate these credentials.</p>
     """
     return _send(email, "[THREXIA] Intelligence Clearance Granted — Your Credentials", _base_template(content))
 
@@ -227,23 +271,25 @@ def notify_user_rejected(
 ) -> bool:
     """Notify the user that their access request was declined."""
     reason_block = f"""
-      <div class="info-box">
+      <div class="info-card">
         <div class="info-row">
-          <span class="info-label">Administrator Note</span>
-          <span class="info-value" style="max-width:300px;text-align:right;">{reason or 'No additional information provided.'}</span>
+          <span class="info-label">Administrative Note</span>
+          <span class="info-value">{reason or 'Compliance failure or insufficient justification.'}</span>
         </div>
       </div>
     """ if reason else ""
 
     content = f"""
-      <h2>❌ Access Request Declined</h2>
-      <p>We regret to inform you that your request for <span class="badge">{role}</span> access to the THREXIA platform has been <span class="danger">declined</span> by the System Administrator.</p>
+      <h2 class="content-heading">❌ Authorization Declined</h2>
+      <p class="content-text">Your request for <span class="badge">{role}</span> access to the THREXIA platform has been <span class="text-danger">declined</span> following a security review.</p>
 
       {reason_block}
 
-      <p>If you believe this decision was made in error, or if you have additional information to support your request, please contact the administrator directly at <span class="highlight">buttanas813@gmail.com</span>.</p>
+      <p class="content-text">If you believe this decision was made in error, or if you have additional intelligence to support your request, please contact the System Administrator.</p>
 
-      <p style="font-size:13px;color:#475569;">You may submit a new request at any time via the THREXIA registration portal.</p>
+      <div class="button-wrapper">
+        <a class="action-button" href="mailto:buttanas813@gmail.com">Contact Security Admin</a>
+      </div>
     """
     return _send(email, "[THREXIA] Access Request Declined", _base_template(content))
 
@@ -251,44 +297,50 @@ def notify_user_rejected(
 def notify_admin_password_reset(username: str, email: str) -> bool:
     """Alert the admin that a user has requested a password reset."""
     content = f"""
-      <h2>🔑 Password Reset Request</h2>
-      <p>An operator has requested a manual password reset. For security reasons, this requires administrative verification.</p>
+      <h2 class="content-heading">🔑 Security Reset Alert</h2>
+      <p class="content-text">A manual password reset event has been triggered for the following user account. Administrative override is required to finalize this operation.</p>
 
-      <div class="info-box">
+      <div class="info-card">
         <div class="info-row">
-          <span class="info-label">Username</span>
-          <span class="info-value"><span class="mono">{username}</span></span>
+          <span class="info-label">Target Account</span>
+          <span class="info-value"><span class="mono">@{username}</span></span>
         </div>
         <div class="info-row">
-          <span class="info-label">Email</span>
+          <span class="info-label">Registered Email</span>
           <span class="info-value">{email}</span>
         </div>
         <div class="info-row">
-          <span class="info-label">Requested At</span>
-          <span class="info-value">{datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}</span>
+          <span class="info-label">Event Timestamp</span>
+          <span class="info-value">{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}</span>
         </div>
       </div>
 
-      <p>Verify the identity of the user and fulfill the reset from the <strong>Access Control</strong> command center.</p>
-      <a class="cta-btn" href="http://localhost:5173/admin/access-control">Go to Access Control →</a>
+      <p class="content-text">Verify the identity of the operator before authorizing the credential reset in the <strong>Access Control</strong> module.</p>
+      
+      <div class="button-wrapper">
+        <a class="action-button" href="http://localhost:5173/admin/access-control">Manage Reset Request →</a>
+      </div>
     """
-    return _send(ADMIN_EMAIL, f"[THREXIA] Password Reset Request — {username}", _base_template(content))
+    return _send(ADMIN_EMAIL, f"[THREXIA] Reset Request: {username}", _base_template(content))
 
 
 def notify_user_password_reset_fulfilled(email: str, temp_pass: str) -> bool:
     """Send the new temporary password to the user."""
     content = f"""
-      <h2>🛡️ Password Reset Complete</h2>
-      <p>Your password reset request has been processed by the System Administrator. A new temporary passcode has been generated for your account.</p>
+      <h2 class="content-heading">🛡️ Protocol Reset Complete</h2>
+      <p class="content-text">Your account security reset has been finalized by the System Administrator. A new temporary access cipher has been provisioned.</p>
 
-      <div class="info-box">
+      <div class="info-card">
         <div class="info-row">
-          <span class="info-label">Temporary Passcode</span>
+          <span class="info-label">Temporary Cipher</span>
           <span class="info-value"><span class="mono">{temp_pass}</span></span>
         </div>
       </div>
 
-      <p>⚠️ <strong>Security Notice:</strong> Please log in immediately and update your password in the <strong>Security Settings</strong> panel.</p>
-      <a class="cta-btn" href="http://localhost:5173/login">Log In to THREXIA →</a>
+      <p class="content-text"><strong>Security Notice:</strong> Access the platform immediately and update your credentials via the <strong>Security Settings</strong> node to maintain account integrity.</p>
+      
+      <div class="button-wrapper">
+        <a class="action-button" href="http://localhost:5173/login">Access Terminal →</a>
+      </div>
     """
     return _send(email, "[THREXIA] Your Password has been Reset", _base_template(content))

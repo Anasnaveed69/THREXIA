@@ -1,0 +1,122 @@
+.cyber-button-wrapper {
+  position: relative;
+  display: inline-block;
+  padding: 1.5px; /* Border thickness */
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+/* The animated border "trace" */
+.cyber-button-wrapper::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    transparent,
+    transparent,
+    transparent,
+    var(--primary-purple, #8b5cf6),
+    transparent
+  );
+  animation: rotate-border 4s linear infinite;
+  z-index: -1;
+}
+
+@keyframes rotate-border {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.cyber-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.65rem 1.8rem;
+  background: var(--panel-bg, #06060c);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  color: var(--text-strong, #fff);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  z-index: 2;
+  border: none;
+  width: 100%;
+  border-radius: 5px; /* Standard professional rounded corners */
+}
+
+.cyber-button-wrapper:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(139, 92, 246, 0.25);
+}
+
+.cyber-button-wrapper:hover::before {
+  animation-duration: 2s; /* Speed up slightly on hover */
+  background: conic-gradient(
+    transparent,
+    transparent,
+    var(--primary-purple, #8b5cf6),
+    #fff,
+    var(--primary-purple, #8b5cf6),
+    transparent
+  );
+}
+
+.cyber-button:hover {
+  background: rgba(139, 92, 246, 0.1);
+  letter-spacing: 0.22em;
+}
+
+.cyber-button-text {
+  position: relative;
+  z-index: 4;
+  text-shadow: 0 0 5px rgba(139, 92, 246, 0.3);
+  transition: all 0.3s ease;
+}
+
+.cyber-button:hover .cyber-button-text {
+  text-shadow: 0 0 10px var(--primary-purple), 0 0 20px var(--primary-purple);
+}
+
+/* Grid texture */
+.cyber-button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(var(--cyber-grid, rgba(139, 92, 246, 0.05)) 1px, transparent 1px),
+    linear-gradient(90deg, var(--cyber-grid, rgba(139, 92, 246, 0.05)) 1px, transparent 1px);
+  background-size: 4px 4px;
+  z-index: 0;
+  opacity: 0.3;
+}
+
+/* Theme compatibility */
+body.light-mode .cyber-button {
+  background: #ffffff;
+  color: var(--primary-purple);
+}
+
+body.light-mode .cyber-button-wrapper {
+  background: rgba(139, 92, 246, 0.05);
+}
+
+body.light-mode .cyber-button:hover {
+  background: rgba(139, 92, 246, 0.02);
+}

@@ -168,7 +168,7 @@ const AdminAccessControl = () => {
                             <div className="admin-user-meta">
                                 <span className="meta-item"><Shield size={12} /> {user.username}</span>
                                 <span className="meta-item"><Mail size={12} /> {user.email}</span>
-                                <span className="badge" style={{ background: 'rgba(59,130,246,0.1)', color: '#3B82F6', borderColor: 'rgba(59,130,246,0.2)' }}>
+                                <span className="badge badge-info">
                                     {user.role}
                                 </span>
                             </div>

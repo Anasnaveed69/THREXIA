@@ -380,6 +380,24 @@ body.light-mode .logout-btn {
 .badge {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  padding: 0 0.75rem;
+  height: 24px;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  gap: 0.45rem;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.badge-none-placeholder {
+
+  display: inline-flex;
+  align-items: center;
   padding: 0.35rem 0.75rem;
   border-radius: 4px;
   font-size: 0.7rem;
@@ -388,6 +406,33 @@ body.light-mode .logout-btn {
   text-transform: uppercase;
 }
 .badge-danger {
+  background-color: rgba(239, 68, 68, 0.08);
+  color: #EF4444;
+  border-color: rgba(239, 68, 68, 0.25);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.05);
+}
+
+.badge-success {
+  background-color: rgba(16, 185, 129, 0.08);
+  color: #10B981;
+  border-color: rgba(16, 185, 129, 0.25);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.05);
+}
+
+.badge-warning {
+  background-color: rgba(249, 115, 22, 0.08);
+  color: #F97316;
+  border-color: rgba(249, 115, 22, 0.25);
+}
+
+.badge-info {
+  background-color: rgba(59, 130, 246, 0.08);
+  color: #3B82F6;
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+.badge-danger-old {
+
   background-color: var(--danger-bg);
   color: var(--danger-red);
   border: 1px solid rgba(239, 68, 68, 0.3);

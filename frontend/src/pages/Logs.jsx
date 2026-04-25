@@ -186,22 +186,21 @@ export default function Logs() {
                     </td>
                     <td>
                       {incidentActions[log.id] === 'resolved' ? (
-                        <span className="badge" style={{ background: 'rgba(16,185,129,0.15)', color: '#10B981', border: '1px solid rgba(16,185,129,0.3)' }}>
-                          <CheckCircle2 size={12} /> Resolved
+                        <span className="badge badge-success">
+                          <CheckCircle2 size={13} /> Resolved
                         </span>
                       ) : incidentActions[log.id] === 'escalated' ? (
-                        <span className="badge" style={{ background: 'rgba(249,115,22,0.1)', color: '#F97316', border: '1px solid rgba(249,115,22,0.3)' }}>
-                          <ArrowUpCircle size={12} /> Escalated
+                        <span className="badge badge-warning">
+                          <ArrowUpCircle size={13} /> Escalated
                         </span>
                       ) : (
-                        <span className={`badge ${log.type === 'threat' ? 'badge-danger' : ''}`} style={{ backgroundColor: log.type === 'safe' ? 'var(--success-green)' : '', color: log.type === 'safe' ? 'white' : '', border: log.type === 'safe' ? 'none' : '' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                            {log.type === 'threat' ? <AlertCircle size={12} /> : <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'white' }} />}
-                            {log.status}
-                          </div>
+                        <span className={`badge ${log.type === 'threat' ? 'badge-danger' : 'badge-success'}`}>
+                          {log.type === 'threat' ? <AlertCircle size={13} /> : <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'currentColor', boxShadow: '0 0 8px currentColor' }} />}
+                          {log.status}
                         </span>
                       )}
                     </td>
+
                     {isAnalyst && (
                       <td onClick={e => e.stopPropagation()}>
                         {log.type === 'threat' && !incidentActions[log.id] ? (
@@ -303,13 +302,10 @@ export default function Logs() {
                 </div>
               </div>
               <div style={{ marginBottom: '1rem' }}>
-                <span className={`badge ${log.type === 'threat' ? 'badge-danger' : ''}`} style={{
-                  backgroundColor: log.type === 'safe' ? 'var(--success-green)' : '',
-                  color: log.type === 'safe' ? 'white' : '',
-                  border: log.type === 'safe' ? 'none' : ''
-                }}>
+                <span className={`badge ${log.type === 'threat' ? 'badge-danger' : 'badge-success'}`}>
                   {log.status}
                 </span>
+
               </div>
 
               <AnimatePresence>
