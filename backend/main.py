@@ -227,7 +227,7 @@ async def _event_stream_simulator():
             "id":               log_id,
             "time":             timestamp,
             "user":             user,
-            "confidence_score": confidence,
+            "confidence_score": round(float(confidence), 1),
             "explanations":     explanations,
             "type":             "threat" if is_threat else "safe",
             "status":           "Suspicious" if is_threat else "Normal",
@@ -1023,7 +1023,7 @@ def analyze_manual_log(log: ManualLog, current_user: dict = Depends(require_perm
 
         return {
             "prediction":  "Threat" if prediction == -1 else "Normal",
-            "confidence":  round(confidence, 1),
+            "confidence":  round(float(confidence), 1),
             "explanations": explanations,
         }
     except Exception as e:
@@ -1063,7 +1063,7 @@ async def upload_csv(file: UploadFile = File(...), current_user: dict = Depends(
                     "row":          row_idx,
                     "features":     features,
                     "prediction":   "Threat" if prediction == -1 else "Normal",
-                    "confidence":   round(confidence, 1),
+                    "confidence":   round(float(confidence), 1),
                     "explanations": _interpret_anomaly(features) if prediction == -1 else ["Normal."],
                 })
             except ValueError as e:
