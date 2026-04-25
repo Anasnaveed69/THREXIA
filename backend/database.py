@@ -325,7 +325,7 @@ def save_telemetry_log(entry: dict) -> None:
     if col is not None:
         # Check if log already exists by ID to avoid duplicates in loops
         if not col.find_one({"id": entry["id"]}):
-            col.insert_one(entry)
+            col.insert_one(entry.copy())
     else:
         # Fallback to state (handled in main.py)
         pass
