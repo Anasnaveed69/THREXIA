@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer, CartesianGrid, YAxis, BarChart, Bar } from 'recharts';
-import { 
-  ShieldAlert, TrendingUp, Users, Server, 
-  Download, FileText, RefreshCw, CheckCircle, 
+import {
+  ShieldAlert, TrendingUp, Users, Server,
+  Download, FileText, RefreshCw, CheckCircle,
   AlertTriangle, BookOpen, ShieldCheck, Activity,
   Clock, Zap, BarChart2, Lock
 } from 'lucide-react';
@@ -30,10 +30,10 @@ function ExecMetricCard({ icon: Icon, label, value, sub, color = 'var(--primary-
 //  Recommendation Card
 // ─────────────────────────────────────────────
 const PRIORITY_META = {
-  CRITICAL: { color: '#EF4444', bg: 'rgba(239,68,68,0.08)', icon: ShieldAlert,     border: 'rgba(239,68,68,0.25)' },
-  HIGH:     { color: '#F97316', bg: 'rgba(249,115,22,0.08)', icon: AlertTriangle,   border: 'rgba(249,115,22,0.25)' },
-  LOW:      { color: '#10B981', bg: 'rgba(16,185,129,0.08)', icon: CheckCircle,     border: 'rgba(16,185,129,0.25)' },
-  ROUTINE:  { color: '#8B5CF6', bg: 'rgba(139,92,246,0.08)', icon: BookOpen,        border: 'rgba(139,92,246,0.25)' },
+  CRITICAL: { color: '#EF4444', bg: 'rgba(239,68,68,0.08)', icon: ShieldAlert, border: 'rgba(239,68,68,0.25)' },
+  HIGH: { color: '#F97316', bg: 'rgba(249,115,22,0.08)', icon: AlertTriangle, border: 'rgba(249,115,22,0.25)' },
+  LOW: { color: '#10B981', bg: 'rgba(16,185,129,0.08)', icon: CheckCircle, border: 'rgba(16,185,129,0.25)' },
+  ROUTINE: { color: '#8B5CF6', bg: 'rgba(139,92,246,0.08)', icon: BookOpen, border: 'rgba(139,92,246,0.25)' },
 };
 
 function RecommendationCard({ rec }) {
@@ -92,15 +92,15 @@ export default function Dashboard() {
     model_status: 'OFFLINE',
   });
 
-  const [report, setReport]         = useState(null);
+  const [report, setReport] = useState(null);
   const [reportLoading, setReportLoading] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
   const [activeView, setActiveView] = useState('dashboard'); // 'dashboard' | 'report'
 
   const role = localStorage.getItem('threxia_role') || 'User';
-  const isManager   = role === 'IT Manager';
-  const isAdmin     = role === 'System Administrator';
-  const isAnalyst   = role === 'Security Analyst';
+  const isManager = role === 'IT Manager';
+  const isAdmin = role === 'System Administrator';
+  const isAnalyst = role === 'Security Analyst';
   const isManagerOrAdmin = isManager || isAdmin || isAnalyst;
 
   // ── Fetch live dashboard state every 3s ──────────────────────────────────
@@ -134,7 +134,7 @@ export default function Dashboard() {
     setReportLoading(true);
     const token = localStorage.getItem('threxia_auth');
     try {
-      const res  = await fetch(`${API_BASE_URL}/api/intelligence/report`, {
+      const res = await fetch(`${API_BASE_URL}/api/intelligence/report`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       const data = await res.json();
@@ -152,15 +152,15 @@ export default function Dashboard() {
     setExportLoading(true);
     const token = localStorage.getItem('threxia_auth');
     try {
-      const res  = await fetch(`${API_BASE_URL}/api/intelligence/export-csv`, {
+      const res = await fetch(`${API_BASE_URL}/api/intelligence/export-csv`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       const data = await res.json();
       if (data.csv_data) {
         const blob = new Blob([data.csv_data], { type: 'text/csv;charset=utf-8;' });
-        const url  = URL.createObjectURL(blob);
+        const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.href     = url;
+        link.href = url;
         link.download = data.filename || 'threxia_report.csv';
         link.click();
         URL.revokeObjectURL(url);
@@ -185,7 +185,7 @@ export default function Dashboard() {
     const { report_metadata, executive_summary: s, threat_intelligence, recommendations } = report;
 
     const integrityColors = { 'A+': '#10B981', 'A': '#22C55E', 'B': '#EAB308', 'C': '#F97316', 'D': '#EF4444' };
-    const integrityColor  = integrityColors[s.integrity_score] || '#8B5CF6';
+    const integrityColor = integrityColors[s.integrity_score] || '#8B5CF6';
 
     return (
       <div>
@@ -219,13 +219,13 @@ export default function Dashboard() {
         {/* ── Compact KPI Bar ── */}
         <div className="report-kpi-bar">
           {[
-            { label: 'Integrity Score',      value: s.integrity_score,        color: integrityColor, sub: 'live threat grade' },
-            { label: 'Neutralization Rate',  value: `${s.neutralization_rate}%`, color: '#10B981',   sub: 'events handled safely' },
-            { label: 'Total Logs',           value: s.total_logs_analyzed.toLocaleString(), color: 'var(--primary-blue)', sub: 'analyzed by AI' },
-            { label: 'Anomalies Detected',   value: s.total_anomalies.toLocaleString(),     color: 'var(--danger-red)',   sub: 'flagged incidents' },
-            { label: 'Anomaly Rate',         value: `${s.anomaly_rate_pct}%`,               color: '#F97316',             sub: 'of all activity' },
-            { label: 'Peak Threat Hour',     value: s.peak_threat_hour,                     color: '#A78BFA',             sub: 'highest risk window' },
-            { label: 'Active Personnel',     value: s.active_users,                         color: 'var(--primary-purple)', sub: 'cleared users' },
+            { label: 'Integrity Score', value: s.integrity_score, color: integrityColor, sub: 'live threat grade' },
+            { label: 'Neutralization Rate', value: `${s.neutralization_rate}%`, color: '#10B981', sub: 'events handled safely' },
+            { label: 'Total Logs', value: s.total_logs_analyzed.toLocaleString(), color: 'var(--primary-blue)', sub: 'analyzed by AI' },
+            { label: 'Anomalies Detected', value: s.total_anomalies.toLocaleString(), color: 'var(--danger-red)', sub: 'flagged incidents' },
+            { label: 'Anomaly Rate', value: `${s.anomaly_rate_pct}%`, color: '#F97316', sub: 'of all activity' },
+            { label: 'Peak Threat Hour', value: s.peak_threat_hour, color: '#A78BFA', sub: 'highest risk window' },
+            { label: 'Active Personnel', value: s.active_users, color: 'var(--primary-purple)', sub: 'cleared users' },
           ].map(({ label, value, color, sub }) => (
             <div key={label} className="report-kpi-item">
               <div className="report-kpi-label">{label}</div>
@@ -248,20 +248,20 @@ export default function Dashboard() {
                 <AreaChart data={threat_intelligence.weekly_activity_trend}>
                   <defs>
                     <linearGradient id="rNorm" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#3B82F6" stopOpacity={0.25}/>
-                      <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="rThreat" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#EF4444" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#EF4444" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#EF4444" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.04)" />
                   <XAxis dataKey="time" stroke="#64748B" fontSize={11} tickLine={false} axisLine={false} />
                   <YAxis stroke="#64748B" fontSize={11} tickLine={false} axisLine={false} width={30} />
                   <Tooltip content={<CustomTooltip />} />
-                  <Area type="monotone" name="Normal"     dataKey="normal_activity"     stroke="#3B82F6" strokeWidth={2} fillOpacity={1} fill="url(#rNorm)" />
-                  <Area type="monotone" name="Suspicious" dataKey="suspicious_activity"  stroke="#EF4444" strokeWidth={2} fillOpacity={1} fill="url(#rThreat)" />
+                  <Area type="monotone" name="Normal" dataKey="normal_activity" stroke="#3B82F6" strokeWidth={2} fillOpacity={1} fill="url(#rNorm)" />
+                  <Area type="monotone" name="Suspicious" dataKey="suspicious_activity" stroke="#EF4444" strokeWidth={2} fillOpacity={1} fill="url(#rThreat)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -366,19 +366,19 @@ export default function Dashboard() {
               <AreaChart data={dashState.chart_data}>
                 <defs>
                   <linearGradient id="colorNormal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#2563EB" stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor="#2563EB" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#2563EB" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#2563EB" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="colorThreat" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#EF4444" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#EF4444" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#EF4444" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="time"             stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis                            stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} />
+                <XAxis dataKey="time" stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} />
                 <Tooltip content={<CustomTooltip />} />
-                <Area type="monotone" name="Normal Activity"       dataKey="normal_activity"    stroke="#2563EB" strokeWidth={2} fillOpacity={1} fill="url(#colorNormal)" />
+                <Area type="monotone" name="Normal Activity" dataKey="normal_activity" stroke="#2563EB" strokeWidth={2} fillOpacity={1} fill="url(#colorNormal)" />
                 <Area type="monotone" name="Suspicious Deviations" dataKey="suspicious_activity" stroke="#EF4444" strokeWidth={2} fillOpacity={1} fill="url(#colorThreat)" />
               </AreaChart>
             </ResponsiveContainer>

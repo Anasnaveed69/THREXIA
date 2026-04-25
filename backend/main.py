@@ -689,18 +689,17 @@ def get_dashboard_data(current_user: dict = Depends(verify_token)):
 
     log_operation(current_user["username"], "VIEW_DASHBOARD")
 
-    # Robust sync with MongoDB
+    # Direct sync with MongoDB (same as Logs page)
     try:
-        from database import get_telemetry_logs, telemetry_logs
-        db_count = telemetry_logs.count_documents({}) if telemetry_logs is not None else 0
-        total_logs = max(db_count, state["total_logs_analyzed"])
+        from database import telemetry_logs
+        total_logs = telemetry_logs.count_documents({})
+        total_anomalies = telemetry_logs.count_documents({"type": "threat"})
         
-        # Count anomalies from DB
-        total_anomalies = telemetry_logs.count_documents({"type": "threat"}) if telemetry_logs is not None else 0
-        if total_anomalies == 0 and total_logs > 0:
+        # Absolute safety: If DB is fresh, use seeded baseline
+        if total_logs < 100:
+            total_logs = state["total_logs_analyzed"]
             total_anomalies = state["total_anomalies"]
     except Exception as e:
-        print(f"[DASHBOARD ERROR] DB sync failed: {e}")
         total_logs      = state["total_logs_analyzed"]
         total_anomalies = state["total_anomalies"]
 
