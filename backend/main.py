@@ -58,6 +58,8 @@ from database import (
     update_log_action,
     mongodb_connected,
     ROLE_ACCESS_MAP,
+    get_telemetry_count,
+    get_anomaly_count,
 )
 from email_service import (
     notify_admin_new_request,
@@ -280,6 +282,16 @@ async def startup_event():
             seed_database()
         except Exception as e:
             print(f"[ERROR] Seeding failed: {e}")
+
+    # Initialize counters from the database so they persist correctly
+    try:
+        db_count = get_telemetry_count()
+        db_anomalies = get_anomaly_count()
+        if db_count > 0:
+            state["total_logs_analyzed"] = 5420 + db_count
+            state["total_anomalies"] = db_anomalies
+    except Exception as e:
+        print(f"[WARNING] Could not initialize telemetry counts: {e}")
 
     # Populate state with active-user list for the simulator
     state["users"] = [u["username"] for u in get_all_users() if u.get("status") == "active"]
@@ -703,14 +715,12 @@ def get_dashboard_data(current_user: dict = Depends(verify_token)):
         log_operation(current_user["username"], "VIEW_DASHBOARD")
 
         # Get counts directly from MongoDB and combine with fixed baseline
+        # Get counts directly from global state which tracks real-time updates
         try:
-            # Limit to 5000 to keep it fast
-            all_telemetry = get_telemetry_logs(limit=5000)
-            BASELINE_LOGS = 5420
-            total_logs = BASELINE_LOGS + len(all_telemetry)
-            total_anomalies = sum(1 for log in all_telemetry if log.get("type") == "threat")
+            total_logs = state["total_logs_analyzed"]
+            total_anomalies = state["total_anomalies"]
         except Exception as db_err:
-            print(f"[DASHBOARD DEBUG] Database error: {db_err}")
+            print(f"[DASHBOARD DEBUG] State error: {db_err}")
             total_logs = state["total_logs_analyzed"]
             total_anomalies = state["total_anomalies"]
 
@@ -791,12 +801,10 @@ def generate_intelligence_report(current_user: dict = Depends(_require_manager))
     Returns structured data for dashboard display and CSV export.
     """
     try:
-        all_telemetry = get_telemetry_logs(limit=5000)
-        BASELINE_LOGS = 5420
-        total_logs = BASELINE_LOGS + len(all_telemetry)
-        total_anomalies = sum(1 for log in all_telemetry if log.get("type") == "threat")
+        total_logs = state["total_logs_analyzed"]
+        total_anomalies = state["total_anomalies"]
     except Exception as e:
-        print(f"[REPORT DEBUG] Error fetching logs: {e}")
+        print(f"[REPORT DEBUG] Error fetching counts: {e}")
         total_logs = state["total_logs_analyzed"]
         total_anomalies = state["total_anomalies"]
 

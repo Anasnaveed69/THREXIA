@@ -338,6 +338,18 @@ def get_telemetry_logs(limit: int = 100) -> list[dict]:
         return logs
     return []
 
+def get_telemetry_count() -> int:
+    col = db["telemetry_logs"] if (db is not None and mongodb_connected) else None
+    if col is not None:
+        return col.estimated_document_count()
+    return 0
+
+def get_anomaly_count() -> int:
+    col = db["telemetry_logs"] if (db is not None and mongodb_connected) else None
+    if col is not None:
+        return col.count_documents({"type": "threat"})
+    return 0
+
 def update_log_action(log_id: str, action: str) -> bool:
     """Update the action status (Resolved/Escalated) for a telemetry log."""
     col = db["telemetry_logs"] if (db is not None and mongodb_connected) else None
