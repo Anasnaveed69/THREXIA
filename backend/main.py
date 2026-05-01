@@ -4,6 +4,7 @@ AI-Powered Insider Threat Intelligence Platform
 """
 
 from fastapi import FastAPI, BackgroundTasks, HTTPException, Depends, UploadFile, File
+from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr
@@ -13,6 +14,7 @@ import os
 import random
 import secrets
 import string
+import json
 from datetime import datetime, timedelta
 import asyncio
 import jwt
@@ -51,8 +53,13 @@ from database import (
     create_password_reset_request,
     get_pending_password_resets,
     resolve_password_reset,
+    save_telemetry_log,
+    get_telemetry_logs,
+    update_log_action,
     mongodb_connected,
     ROLE_ACCESS_MAP,
+    get_telemetry_count,
+    get_anomaly_count,
 )
 from email_service import (
     notify_admin_new_request,
@@ -124,13 +131,18 @@ def require_permission(permission: str):
 # ─────────────────────────────────────────────
 #  ML Model Loading
 # ─────────────────────────────────────────────
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "models", "threxia_model.joblib")
+SCALER_PATH = os.path.join(BASE_DIR, "models", "threxia_scaler.joblib")
+
 try:
-    model  = joblib.load("models/threxia_model.joblib")
-    scaler = joblib.load("models/threxia_scaler.joblib")
-    print("[SUCCESS] ML model and scaler loaded.")
+    model  = joblib.load(MODEL_PATH)
+    scaler = joblib.load(SCALER_PATH)
+    print(f"[SUCCESS] ML model loaded from {MODEL_PATH}")
 except Exception as e:
     model = scaler = None
     print(f"[WARNING] ML model offline: {e}")
+
 
 # ─────────────────────────────────────────────
 #  Live State
@@ -145,11 +157,13 @@ state = {
     "active_sessions":      {},   # username -> {role, login_time, ip, full_name}
 }
 
-_now = datetime.now()
+_now = datetime.utcnow()
 for _i in range(24):
     _dt = _now - timedelta(hours=23 - _i)
+    # Zero out minutes/seconds to align strictly to the hour block
+    _dt = _dt.replace(minute=0, second=0, microsecond=0)
     state["system_activity_chart"].append({
-        "time":               _dt.strftime("%H:00"),
+        "time":               _dt.isoformat() + "Z",
         "normal_activity":    random.randint(50, 150),
         "suspicious_activity": random.randint(0, 2),
     })
@@ -195,46 +209,65 @@ async def _event_stream_simulator():
 
         state["total_logs_analyzed"] += 1
         log_id    = f"LOG-{random.randint(10000,99999)}"
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        timestamp = datetime.utcnow().isoformat() + "Z"
         user      = random.choice(state["users"]) if state["users"] else "system"
 
+        # Determine threat status (use model if available, otherwise random fallback)
         if model and scaler:
-            arr        = np.array(features).reshape(1, -1)
-            scaled     = scaler.transform(arr)
-            prediction = int(model.predict(scaled)[0])
-            raw_score  = model.score_samples(scaled)[0]
+            try:
+                arr        = np.array(features).reshape(1, -1)
+                scaled     = scaler.transform(arr)
+                prediction = int(model.predict(scaled)[0])
+                raw_score  = model.score_samples(scaled)[0]
+                is_threat  = (prediction == -1)
+                confidence = round(min(99.9, 85.0 + abs(raw_score) * 0.5) if is_threat else min(99.9, max(50.0, (raw_score / 350.0) * 100)), 1)
+            except Exception as e:
+                is_threat = anomalous
+                confidence = 85.0 if is_threat else 95.0
+        else:
+            is_threat = anomalous
+            confidence = 0.0 # Indication that AI model is offline (fallback active)
 
-            if prediction == -1:
-                confidence = min(99.9, 85.0 + abs(raw_score) * 0.5 + random.uniform(0, 5))
-            else:
-                confidence = min(99.9, max(50.0, (raw_score / 350.0) * 100))
+        explanations = _interpret_anomaly(features) if is_threat else ["Behavior falls within normal operational parameters."]
 
-            is_threat    = (prediction == -1)
-            explanations = _interpret_anomaly(features) if is_threat else ["Behavior falls within normal operational parameters."]
+        entry = {
+            "id":               log_id,
+            "time":             timestamp,
+            "user":             user,
+            "confidence_score": round(float(confidence), 1),
+            "explanations":     explanations,
+            "type":             "threat" if is_threat else "safe",
+            "status":           "Suspicious" if is_threat else "Normal",
+            "features":         features,
+        }
 
-            entry = {
-                "id":               log_id,
-                "time":             timestamp,
-                "user":             user,
-                "confidence_score": round(confidence, 1),
-                "explanations":     explanations,
-                "type":             "threat" if is_threat else "safe",
-                "status":           "Suspicious" if is_threat else "Normal",
-                "features":         features,
-            }
+        state["all_logs"].insert(0, entry)
+        if len(state["all_logs"]) > 100:
+            state["all_logs"].pop()
 
-            state["all_logs"].insert(0, entry)
-            if len(state["all_logs"]) > 100:
-                state["all_logs"].pop()
+        # Persist to database
+        save_telemetry_log(entry)
 
-            state["system_activity_chart"][-1]["normal_activity"] += 1
+        # Advance the chart time dynamically
+        current_hour_dt = datetime.utcnow().replace(minute=0, second=0, microsecond=0)
+        current_hour_iso = current_hour_dt.isoformat() + "Z"
 
-            if is_threat:
-                state["total_anomalies"] += 1
-                state["system_activity_chart"][-1]["suspicious_activity"] += 1
-                state["live_alerts"].insert(0, entry)
-                if len(state["live_alerts"]) > 50:
-                    state["live_alerts"].pop()
+        if state["system_activity_chart"] and state["system_activity_chart"][-1]["time"] != current_hour_iso:
+            state["system_activity_chart"].pop(0)
+            state["system_activity_chart"].append({
+                "time": current_hour_iso,
+                "normal_activity": 0,
+                "suspicious_activity": 0
+            })
+
+        state["system_activity_chart"][-1]["normal_activity"] += 1
+
+        if is_threat:
+            state["total_anomalies"] += 1
+            state["system_activity_chart"][-1]["suspicious_activity"] += 1
+            state["live_alerts"].insert(0, entry)
+            if len(state["live_alerts"]) > 50:
+                state["live_alerts"].pop()
 
 
 @app.on_event("startup")
@@ -250,6 +283,16 @@ async def startup_event():
             seed_database()
         except Exception as e:
             print(f"[ERROR] Seeding failed: {e}")
+
+    # Initialize counters from the database so they persist correctly
+    try:
+        db_count = get_telemetry_count()
+        db_anomalies = get_anomaly_count()
+        if db_count > 0:
+            state["total_logs_analyzed"] = 5420 + db_count
+            state["total_anomalies"] = db_anomalies
+    except Exception as e:
+        print(f"[WARNING] Could not initialize telemetry counts: {e}")
 
     # Populate state with active-user list for the simulator
     state["users"] = [u["username"] for u in get_all_users() if u.get("status") == "active"]
@@ -293,6 +336,10 @@ class ForgotPasswordRequest(BaseModel):
 
 class ResetPasswordAdminRequest(BaseModel):
     username: str
+
+class LogActionRequest(BaseModel):
+    log_id: str
+    action: str  # "resolved" | "escalated"
 
 
 # ─────────────────────────────────────────────
@@ -700,57 +747,76 @@ def change_password(request: ChangePasswordRequest, current_user: dict = Depends
 
 @app.get("/api/dashboard", tags=["Analytics"])
 def get_dashboard_data(current_user: dict = Depends(verify_token)):
-    user_access = current_user.get("access_level", [])
-    if "Dashboard" not in user_access and "Overview" not in user_access:
-        raise HTTPException(status_code=403, detail="Access Denied: No intelligence clearance.")
+    try:
+        user_access = current_user.get("access_level", [])
+        if "Dashboard" not in user_access and "Overview" not in user_access:
+            raise HTTPException(status_code=403, detail="Access Denied: No intelligence clearance.")
 
-    log_operation(current_user["username"], "VIEW_DASHBOARD")
+        log_operation(current_user["username"], "VIEW_DASHBOARD")
 
-    total_logs      = state["total_logs_analyzed"]
-    total_anomalies = state["total_anomalies"]
+        # Get counts directly from MongoDB and combine with fixed baseline
+        # Get counts directly from global state which tracks real-time updates
+        try:
+            total_logs = state["total_logs_analyzed"]
+            total_anomalies = state["total_anomalies"]
+        except Exception as db_err:
+            print(f"[DASHBOARD DEBUG] State error: {db_err}")
+            total_logs = state["total_logs_analyzed"]
+            total_anomalies = state["total_anomalies"]
 
-    # ── Executive Metrics (for IT Manager / SysAdmin) ─────────────────────────
-    neutralization_rate = round(100.0 - ((total_anomalies / max(total_logs, 1)) * 100), 2)
-    neutralization_rate = max(0.0, min(100.0, neutralization_rate))
+        # ── Executive Metrics (for IT Manager / SysAdmin) ─────────────────────────
+        neutralization_rate = round(100.0 - ((total_anomalies / max(total_logs, 1)) * 100), 2)
+        neutralization_rate = max(0.0, min(100.0, neutralization_rate))
 
-    # System integrity score: A+ → F based on anomaly density
-    anomaly_pct = (total_anomalies / max(total_logs, 1)) * 100
-    if anomaly_pct < 2:   integrity_score = "A+"
-    elif anomaly_pct < 5: integrity_score = "A"
-    elif anomaly_pct < 10: integrity_score = "B"
-    elif anomaly_pct < 20: integrity_score = "C"
-    else:                  integrity_score = "D"
+        # System integrity score: A+ → F based on anomaly density
+        anomaly_pct = (total_anomalies / max(total_logs, 1)) * 100
+        if anomaly_pct < 2:   integrity_score = "A+"
+        elif anomaly_pct < 5: integrity_score = "A"
+        elif anomaly_pct < 10: integrity_score = "B"
+        elif anomaly_pct < 20: integrity_score = "C"
+        else:                  integrity_score = "D"
 
-    all_users     = get_all_users()
-    active_users  = [u for u in all_users if u.get("status") == "active"]
-    pending_users = [u for u in all_users if u.get("status") == "pending"]
+        all_users     = get_all_users()
+        active_users  = [u for u in all_users if u.get("status") == "active"]
+        pending_users = [u for u in all_users if u.get("status") == "pending"]
 
-    # Breakdown by role
-    role_breakdown = {}
-    for u in active_users:
-        role = u.get("role", "Unknown")
-        role_breakdown[role] = role_breakdown.get(role, 0) + 1
+        # Breakdown by role
+        role_breakdown = {}
+        for u in active_users:
+            role = u.get("role", "Unknown")
+            role_breakdown[role] = role_breakdown.get(role, 0) + 1
 
-    # Recent 7-day alert trend (simulated from chart data)
-    recent_chart = state["system_activity_chart"][-7:] if len(state["system_activity_chart"]) >= 7 else state["system_activity_chart"]
-    weekly_threats = sum(p.get("suspicious_activity", 0) for p in recent_chart)
+        # Recent 7-day alert trend (simulated from chart data)
+        recent_chart = state["system_activity_chart"][-7:] if len(state["system_activity_chart"]) >= 7 else state["system_activity_chart"]
+        weekly_threats = sum(p.get("suspicious_activity", 0) for p in recent_chart)
 
-    return {
-        "status":               "Running AI Model" if model else "Model Offline",
-        "total_logs":           total_logs,
-        "total_anomalies":      total_anomalies,
-        "chart_data":           state["system_activity_chart"],
-        "latest_alerts":        state["live_alerts"][:5],
-        "user":                 current_user,
-        # Executive intelligence fields
-        "neutralization_rate":  neutralization_rate,
-        "integrity_score":      integrity_score,
-        "active_users_count":   len(active_users),
-        "pending_users_count":  len(pending_users),
-        "role_breakdown":       role_breakdown,
-        "weekly_threats":       weekly_threats,
-        "model_status":         "ONLINE" if model else "OFFLINE",
-    }
+        res = {
+            "status":               "Running AI Model" if model else "Model Offline",
+            "total_logs":           total_logs,
+            "total_anomalies":      total_anomalies,
+            "chart_data":           state["system_activity_chart"],
+            "latest_alerts":        state["live_alerts"][:5],
+            "user":                 current_user,
+            "neutralization_rate":  neutralization_rate,
+            "integrity_score":      integrity_score,
+            "active_users_count":   len(active_users),
+            "pending_users_count":  len(pending_users),
+            "role_breakdown":       role_breakdown,
+            "weekly_threats":       weekly_threats,
+            "model_status":         "ONLINE" if model else "OFFLINE",
+        }
+        return Response(content=json.dumps(res), media_type="application/json")
+    except Exception as e:
+        print(f"[DASHBOARD ERROR] {e}")
+        fallback_res = {
+            "status": "Fallback Mode",
+            "total_logs": 5420,
+            "total_anomalies": 0,
+            "chart_data": state["system_activity_chart"],
+            "latest_alerts": [],
+            "error": str(e)
+        }
+        return Response(content=json.dumps(fallback_res), media_type="application/json")
 
 
 # ─────────────────────────────────────────────
@@ -774,9 +840,15 @@ def generate_intelligence_report(current_user: dict = Depends(_require_manager))
     Generate a comprehensive security intelligence report for IT Managers and System Administrators.
     Returns structured data for dashboard display and CSV export.
     """
-    total_logs      = state["total_logs_analyzed"]
-    total_anomalies = state["total_anomalies"]
-    total_normal    = total_logs - total_anomalies
+    try:
+        total_logs = state["total_logs_analyzed"]
+        total_anomalies = state["total_anomalies"]
+    except Exception as e:
+        print(f"[REPORT DEBUG] Error fetching counts: {e}")
+        total_logs = state["total_logs_analyzed"]
+        total_anomalies = state["total_anomalies"]
+
+    total_normal    = max(0, total_logs - total_anomalies)
 
     anomaly_pct         = round((total_anomalies / max(total_logs, 1)) * 100, 2)
     neutralization_rate = round(100.0 - anomaly_pct, 2)
@@ -826,7 +898,7 @@ def generate_intelligence_report(current_user: dict = Depends(_require_manager))
 
     report_generated_at = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
 
-    return {
+    res = {
         "report_metadata": {
             "generated_at":    report_generated_at,
             "generated_by":    current_user["username"],
@@ -857,6 +929,8 @@ def generate_intelligence_report(current_user: dict = Depends(_require_manager))
         },
         "recommendations": _generate_recommendations(anomaly_pct, total_anomalies),
     }
+
+    return Response(content=json.dumps(res), media_type="application/json")
 
 
 def _generate_recommendations(anomaly_pct: float, total_anomalies: int) -> list[dict]:
@@ -956,7 +1030,29 @@ def export_report_csv(current_user: dict = Depends(_require_manager)):
 @app.get("/api/logs", tags=["Analytics"])
 def get_all_logs(current_user: dict = Depends(require_permission("Logs"))):
     log_operation(current_user["username"], "VIEW_LOGS")
-    return state["all_logs"]
+    try:
+        db_logs = get_telemetry_logs(limit=5000)
+        logs_to_return = db_logs if db_logs else state["all_logs"]
+        return Response(content=json.dumps(logs_to_return), media_type="application/json")
+    except Exception as e:
+        print(f"[LOGS ERROR] {e}")
+        return Response(content=json.dumps(state["all_logs"]), media_type="application/json")
+
+
+@app.post("/api/logs/action", tags=["Analytics"])
+def log_action(request: LogActionRequest, current_user: dict = Depends(require_permission("Logs"))):
+    """Save an analyst action (Resolve/Escalate) to the database."""
+    success = update_log_action(request.log_id, request.action)
+    
+    # Also update in-memory state for immediate feedback
+    for log in state["all_logs"]:
+        if log["id"] == request.log_id:
+            log["action_status"] = request.action
+            break
+
+    log_operation(current_user["username"], f"LOG_ACTION_{request.action.upper()}", {"log_id": request.log_id})
+    
+    return {"message": f"Log {request.log_id} marked as {request.action}", "success": success}
 
 
 @app.get("/api/overview/audit", tags=["Analytics"])
@@ -989,7 +1085,7 @@ def analyze_manual_log(log: ManualLog, current_user: dict = Depends(require_perm
 
         return {
             "prediction":  "Threat" if prediction == -1 else "Normal",
-            "confidence":  round(confidence, 1),
+            "confidence":  round(float(confidence), 1),
             "explanations": explanations,
         }
     except Exception as e:
@@ -1029,7 +1125,7 @@ async def upload_csv(file: UploadFile = File(...), current_user: dict = Depends(
                     "row":          row_idx,
                     "features":     features,
                     "prediction":   "Threat" if prediction == -1 else "Normal",
-                    "confidence":   round(confidence, 1),
+                    "confidence":   round(float(confidence), 1),
                     "explanations": _interpret_anomaly(features) if prediction == -1 else ["Normal."],
                 })
             except ValueError as e:

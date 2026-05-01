@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Activity, ShieldAlert, ShieldCheck, Upload } from 'lucide-react';
 import StarBorder from '../components/StarBorder';
+import { API_BASE_URL } from '../apiConfig';
 
 export default function Analyze() {
   const [features, setFeatures] = useState(
@@ -18,7 +19,7 @@ export default function Analyze() {
     try {
       const featureArray = features.split(',').map(f => parseFloat(f.trim()));
       
-      const response = await fetch('http://localhost:8000/api/analyze_manual', {
+      const response = await fetch(`${API_BASE_URL}/api/analyze_manual`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -48,7 +49,7 @@ export default function Analyze() {
       const formData = new FormData();
       formData.append('file', csvFile);
       
-      const response = await fetch('http://localhost:8000/api/upload_csv', {
+      const response = await fetch(`${API_BASE_URL}/api/upload_csv`, {
         method: 'POST',
         headers: { 
           'Authorization': `Bearer ${localStorage.getItem('threxia_auth')}`
@@ -67,7 +68,7 @@ export default function Analyze() {
 
   const handleDownloadTemplate = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/download_csv_template', {
+      const response = await fetch(`${API_BASE_URL}/api/download_csv_template`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('threxia_auth')}` }
       });
       const data = await response.json();

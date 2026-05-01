@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AlertCircle, ChevronDown, ChevronUp, Radio, Activity, Terminal, CheckCircle2, ArrowUpCircle, Shield } from 'lucide-react';
+import { API_BASE_URL } from '../apiConfig';
 import { motion, AnimatePresence } from 'framer-motion';
 import StarBorder from '../components/StarBorder';
 
@@ -9,13 +10,29 @@ export default function Logs() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedId, setExpandedId] = useState(null);
-  const [incidentActions, setIncidentActions] = useState({}); // { [logId]: 'resolved' | 'escalated' }
   const itemsPerPage = 50;
 
   const isAnalyst = (localStorage.getItem('threxia_role') || '') === 'Security Analyst';
 
-  const handleAction = (logId, action) => {
-    setIncidentActions(prev => ({ ...prev, [logId]: action }));
+  const handleAction = async (logId, action) => {
+    const token = localStorage.getItem('threxia_auth');
+    try {
+      await fetch(`${API_BASE_URL}/api/logs/action`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ log_id: logId, action })
+      });
+      
+      // Optimistically update local state for better UX
+      setAllLogs(prev => prev.map(log => 
+        log.id === logId ? { ...log, action_status: action } : log
+      ));
+    } catch (err) {
+      console.error("Failed to save action", err);
+    }
   };
 
   const FEATURE_LABELS = [
@@ -38,7 +55,7 @@ export default function Logs() {
   useEffect(() => {
     const fetchLogs = () => {
       const token = localStorage.getItem('threxia_auth');
-      fetch('http://localhost:8000/api/logs', {
+      fetch(`${API_BASE_URL}/api/logs`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
         .then(res => res.json())
@@ -70,8 +87,8 @@ export default function Logs() {
   }, [filter]);
 
   const role = localStorage.getItem('threxia_role') || 'User';
-  const escalatedCount = Object.values(incidentActions).filter(v => v === 'escalated').length;
-  const resolvedCount  = Object.values(incidentActions).filter(v => v === 'resolved').length;
+  const escalatedCount = allLogs.filter(l => l.action_status === 'escalated').length;
+  const resolvedCount  = allLogs.filter(l => l.action_status === 'resolved').length;
 
   return (
     <div>
@@ -159,7 +176,7 @@ export default function Logs() {
                     <td style={{ color: 'var(--text-secondary)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         {expandedId === log.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                        {log.time}
+                        {new Date(log.time).toLocaleString([], { dateStyle: 'short', timeStyle: 'medium' })}
                       </div>
                     </td>
                     <td style={{ fontWeight: 600, color: log.type === 'threat' ? 'var(--danger-red)' : 'var(--primary-blue)' }}>{log.id}</td>
@@ -185,26 +202,25 @@ export default function Logs() {
                       ))}
                     </td>
                     <td>
-                      {incidentActions[log.id] === 'resolved' ? (
-                        <span className="badge" style={{ background: 'rgba(16,185,129,0.15)', color: '#10B981', border: '1px solid rgba(16,185,129,0.3)' }}>
-                          <CheckCircle2 size={12} /> Resolved
+                      {log.action_status === 'resolved' ? (
+                        <span className="badge badge-success">
+                          <CheckCircle2 size={13} /> Resolved
                         </span>
-                      ) : incidentActions[log.id] === 'escalated' ? (
-                        <span className="badge" style={{ background: 'rgba(249,115,22,0.1)', color: '#F97316', border: '1px solid rgba(249,115,22,0.3)' }}>
-                          <ArrowUpCircle size={12} /> Escalated
+                      ) : log.action_status === 'escalated' ? (
+                        <span className="badge badge-warning">
+                          <ArrowUpCircle size={13} /> Escalated
                         </span>
                       ) : (
-                        <span className={`badge ${log.type === 'threat' ? 'badge-danger' : ''}`} style={{ backgroundColor: log.type === 'safe' ? 'var(--success-green)' : '', color: log.type === 'safe' ? 'white' : '', border: log.type === 'safe' ? 'none' : '' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                            {log.type === 'threat' ? <AlertCircle size={12} /> : <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'white' }} />}
-                            {log.status}
-                          </div>
+                        <span className={`badge ${log.type === 'threat' ? 'badge-danger' : 'badge-success'}`}>
+                          {log.type === 'threat' ? <AlertCircle size={13} /> : <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'currentColor', boxShadow: '0 0 8px currentColor' }} />}
+                          {log.status}
                         </span>
                       )}
                     </td>
+
                     {isAnalyst && (
                       <td onClick={e => e.stopPropagation()}>
-                        {log.type === 'threat' && !incidentActions[log.id] ? (
+                        {log.type === 'threat' && !log.action_status ? (
                           <div style={{ display: 'flex', gap: '0.4rem' }}>
                             <button onClick={() => handleAction(log.id, 'resolved')} className="incident-btn incident-btn-resolve" title="Mark as Resolved">
                               <CheckCircle2 size={13} /> Resolve
@@ -213,7 +229,7 @@ export default function Logs() {
                               <ArrowUpCircle size={13} /> Escalate
                             </button>
                           </div>
-                        ) : incidentActions[log.id] ? (
+                        ) : log.action_status ? (
                           <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Action taken</span>
                         ) : (
                           <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', opacity: 0.4 }}>—</span>
@@ -240,7 +256,7 @@ export default function Logs() {
                                 </div>
                                 {isAnalyst && log.type === 'threat' && (
                                   <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                    {!incidentActions[log.id] ? (
+                                    {!log.action_status ? (
                                       <>
                                         <button onClick={() => handleAction(log.id, 'resolved')} className="incident-btn-lg incident-btn-resolve">
                                           <CheckCircle2 size={14} /> Mark as Resolved
@@ -250,8 +266,8 @@ export default function Logs() {
                                         </button>
                                       </>
                                     ) : (
-                                      <span style={{ fontSize: '0.8rem', color: incidentActions[log.id] === 'resolved' ? '#10B981' : '#F97316', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                        {incidentActions[log.id] === 'resolved' ? <><CheckCircle2 size={14}/> Marked Resolved</> : <><ArrowUpCircle size={14}/> Escalated to Manager</>}
+                                      <span style={{ fontSize: '0.8rem', color: log.action_status === 'resolved' ? '#10B981' : '#F97316', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                        {log.action_status === 'resolved' ? <><CheckCircle2 size={14}/> Marked Resolved</> : <><ArrowUpCircle size={14}/> Escalated to Manager</>}
                                       </span>
                                     )}
                                   </div>
@@ -303,13 +319,10 @@ export default function Logs() {
                 </div>
               </div>
               <div style={{ marginBottom: '1rem' }}>
-                <span className={`badge ${log.type === 'threat' ? 'badge-danger' : ''}`} style={{
-                  backgroundColor: log.type === 'safe' ? 'var(--success-green)' : '',
-                  color: log.type === 'safe' ? 'white' : '',
-                  border: log.type === 'safe' ? 'none' : ''
-                }}>
+                <span className={`badge ${log.type === 'threat' ? 'badge-danger' : 'badge-success'}`}>
                   {log.status}
                 </span>
+
               </div>
 
               <AnimatePresence>

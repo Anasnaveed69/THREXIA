@@ -5,6 +5,7 @@ import {
   MessageSquare, ShieldAlert, RefreshCw, Search, ShieldCheck, 
   User, Monitor, LogOut, Activity, Wifi
 } from 'lucide-react';
+import { API_BASE_URL } from '../apiConfig';
 
 const ROLE_COLORS = {
   'Security Analyst':   { color: '#3B82F6', bg: 'rgba(59,130,246,0.1)'  },
@@ -30,8 +31,8 @@ const AdminAccessControl = () => {
         const token = getToken();
         try {
             const [accessRes, resetRes] = await Promise.all([
-                fetch('http://localhost:8000/api/admin/pending',       { headers: { 'Authorization': `Bearer ${token}` } }),
-                fetch('http://localhost:8000/api/admin/reset-requests',{ headers: { 'Authorization': `Bearer ${token}` } }),
+                fetch(`${API_BASE_URL}/api/admin/pending`,       { headers: { 'Authorization': `Bearer ${token}` } }),
+                fetch(`${API_BASE_URL}/api/admin/reset-requests`,{ headers: { 'Authorization': `Bearer ${token}` } }),
             ]);
             const [accessData, resetData] = await Promise.all([accessRes.json(), resetRes.json()]);
             setPendingUsers(accessData.pending   || []);
@@ -47,7 +48,7 @@ const AdminAccessControl = () => {
         setSessionsLoading(true);
         const token = getToken();
         try {
-            const res  = await fetch('http://localhost:8000/api/admin/sessions', {
+            const res  = await fetch(`${API_BASE_URL}/api/admin/sessions`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
@@ -75,7 +76,7 @@ const AdminAccessControl = () => {
         setProcessing(username);
         const token = getToken();
         try {
-            const res = await fetch('http://localhost:8000/api/admin/approve', {
+            const res = await fetch(`${API_BASE_URL}/api/admin/approve`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ username })
@@ -89,7 +90,7 @@ const AdminAccessControl = () => {
         setProcessing(username);
         const token = getToken();
         try {
-            const res = await fetch('http://localhost:8000/api/admin/reject', {
+            const res = await fetch(`${API_BASE_URL}/api/admin/reject`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ username, reason: "Request declined by administrator." })
@@ -103,7 +104,7 @@ const AdminAccessControl = () => {
         setProcessing(username);
         const token = getToken();
         try {
-            const res  = await fetch('http://localhost:8000/api/admin/reset-password', {
+            const res  = await fetch(`${API_BASE_URL}/api/admin/reset-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ username })
@@ -122,7 +123,7 @@ const AdminAccessControl = () => {
         setProcessing(username);
         const token = getToken();
         try {
-            const res = await fetch('http://localhost:8000/api/admin/sessions/terminate', {
+            const res = await fetch(`${API_BASE_URL}/api/admin/sessions/terminate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ username })
@@ -168,7 +169,7 @@ const AdminAccessControl = () => {
                             <div className="admin-user-meta">
                                 <span className="meta-item"><Shield size={12} /> {user.username}</span>
                                 <span className="meta-item"><Mail size={12} /> {user.email}</span>
-                                <span className="badge" style={{ background: 'rgba(59,130,246,0.1)', color: '#3B82F6', borderColor: 'rgba(59,130,246,0.2)' }}>
+                                <span className="badge badge-info">
                                     {user.role}
                                 </span>
                             </div>

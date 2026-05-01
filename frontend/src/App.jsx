@@ -13,6 +13,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import SecuritySettings from './pages/SecuritySettings';
 import { LayoutDashboard, FileText, ActivitySquare, BookOpen, Sun, Moon, LogOut, Menu, X, ShieldCheck, Lock } from 'lucide-react';
 import StarBorder from './components/StarBorder';
+import CyberButton from './components/CyberButton';
 
 // Helper to safely parse JSON from localStorage
 const safeParse = (key, fallback = []) => {
@@ -182,9 +183,9 @@ function Navbar({ toggleTheme, isLight }) {
             </button>
           </div>
         ) : (
-          <StarBorder as={Link} to="/login" innerClassName="btn-primary" color="var(--primary-glow)" speed="4s" innerStyle={{ padding: '0.5rem 1.25rem', fontSize: '0.75rem', textDecoration: 'none', width: 'auto' }}>
+          <CyberButton as={Link} to="/login">
             LOGIN
-          </StarBorder>
+          </CyberButton>
         )}
       </div>
     </nav>

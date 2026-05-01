@@ -13,15 +13,16 @@ import Sparklines from '../components/Sparklines';
 import DecryptedText from '../components/DecryptedText';
 import ShinyText from '../components/ShinyText';
 import StarBorder from '../components/StarBorder';
+import { API_BASE_URL } from '../apiConfig';
 
-const API = 'http://localhost:8000';
+const API = API_BASE_URL;
 
 /* ─── Role definitions ──────────────────────────────────────── */
 const ALL_MODULES = [
-  { key: 'Overview',        label: 'Overview',         icon: <Eye size={14} />,         to: '/overview',  color: 'var(--primary-purple)' },
-  { key: 'Dashboard',       label: 'Dashboard',        icon: <BarChart2 size={14} />,    to: '/dashboard', color: 'var(--primary-blue)' },
-  { key: 'Logs',            label: 'Audit Logs',       icon: <FileText size={14} />,     to: '/logs',      color: '#22d3ee' },
-  { key: 'Manual Analysis', label: 'Manual Analysis',  icon: <Search size={14} />,       to: '/analyze',   color: '#a78bfa' },
+  { key: 'Overview',        label: 'Overview',         icon: <Eye size={18} />,         to: '/overview',  color: '#8B5CF6' },
+  { key: 'Dashboard',       label: 'Dashboard',        icon: <BarChart2 size={18} />,    to: '/dashboard', color: '#3B82F6' },
+  { key: 'Logs',            label: 'Audit Logs',       icon: <FileText size={18} />,     to: '/logs',      color: '#22d3ee' },
+  { key: 'Manual Analysis', label: 'Manual Analysis',  icon: <Search size={18} />,       to: '/analyze',   color: '#a78bfa' },
 ];
 
 const ROLE_META = {
@@ -390,7 +391,7 @@ export default function Overview() {
           <CyberGrid opacity={0.02} />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-strong)', letterSpacing: '0.12em', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <Users size={18} color="var(--primary-purple)" /> SYSTEM ACCESS MAP
+              <Users size={18} color="#8B5CF6" /> SYSTEM ACCESS MAP
             </div>
             <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', padding: '2px 8px', border: '1px solid currentColor', borderRadius: '4px', opacity: 0.5 }}>AUTHORIZATION v4</div>
           </div>
@@ -398,38 +399,44 @@ export default function Overview() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
             {ALL_MODULES.map((m) => {
               const hasAccess = access.includes(m.key);
+              const cardColor = m.color;
+              
               return (
                 <motion.div 
                   key={m.key}
                   whileHover={hasAccess ? { y: -3, scale: 1.01 } : {}}
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '1rem 1.25rem',
-                    background: hasAccess ? `${m.color}08` : 'var(--item-bg)',
-                    border: `1px solid ${hasAccess ? `${m.color}25` : 'var(--item-border)'}`,
-                    borderRadius: '12px', opacity: hasAccess ? 1 : 0.4,
-                    transition: 'all 0.3s ease',
+                    padding: '1.25rem',
+                    background: hasAccess ? `${cardColor}12` : 'rgba(255,255,255,0.03)',
+                    border: `1px solid ${hasAccess ? `${cardColor}40` : 'rgba(255,255,255,0.08)'}`,
+                    borderRadius: '12px',
+                    boxShadow: hasAccess ? `0 0 20px ${cardColor}10` : 'none',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     position: 'relative',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    opacity: hasAccess ? 1 : 0.6
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <div style={{ 
-                      width: '32px', height: '32px', borderRadius: '8px', 
-                      background: hasAccess ? `${m.color}15` : 'transparent',
+                      width: '42px', height: '42px', borderRadius: '10px', 
+                      background: hasAccess ? `${cardColor}18` : 'rgba(255,255,255,0.02)',
+                      border: `1px solid ${hasAccess ? `${cardColor}30` : 'rgba(255,255,255,0.05)'}`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: hasAccess ? m.color : 'var(--text-secondary)' 
+                      color: hasAccess ? cardColor : 'var(--text-secondary)',
+                      boxShadow: hasAccess ? `0 0 15px ${cardColor}20` : 'none'
                     }}>
                       {m.icon}
                     </div>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 700, color: hasAccess ? 'var(--text-strong)' : 'var(--text-secondary)' }}>
+                    <span style={{ fontSize: '1rem', fontWeight: 700, color: hasAccess ? 'var(--text-strong)' : 'var(--text-secondary)' }}>
                       {m.label}
                     </span>
                   </div>
                   {hasAccess ? (
                     <Link to={m.to} style={{
                       display: 'inline-flex', alignItems: 'center', gap: '4px',
-                      fontSize: '0.7rem', fontWeight: 800, color: m.color,
+                      fontSize: '0.72rem', fontWeight: 800, color: cardColor,
                       textDecoration: 'none', letterSpacing: '0.05em',
                     }}>
                       SECURE LINK <ChevronRight size={14} />
@@ -445,6 +452,7 @@ export default function Overview() {
           </div>
         </SpotlightCard>
       </motion.div>
+
 
       <style>{`
         @keyframes pulse-dot {
