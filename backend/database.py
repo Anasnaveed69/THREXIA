@@ -341,13 +341,17 @@ def get_telemetry_logs(limit: int = 100) -> list[dict]:
 def get_telemetry_count() -> int:
     col = db["telemetry_logs"] if (db is not None and mongodb_connected) else None
     if col is not None:
-        return col.estimated_document_count()
+        count = col.count_documents({})
+        print(f"[DB DEBUG] get_telemetry_count: {count}")
+        return count
     return 0
 
 def get_anomaly_count() -> int:
     col = db["telemetry_logs"] if (db is not None and mongodb_connected) else None
     if col is not None:
-        return col.count_documents({"type": "threat"})
+        count = col.count_documents({"type": "threat"})
+        print(f"[DB DEBUG] get_anomaly_count: {count}")
+        return count
     return 0
 
 def update_log_action(log_id: str, action: str) -> bool:

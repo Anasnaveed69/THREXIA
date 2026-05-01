@@ -808,13 +808,22 @@ def get_dashboard_data(current_user: dict = Depends(verify_token)):
 
         log_operation(current_user["username"], "VIEW_DASHBOARD")
 
-        # Get counts directly from MongoDB and combine with fixed baseline
-        # Get counts directly from global state which tracks real-time updates
+        # Get counts directly from MongoDB for real-time accuracy in deployment
         try:
-            total_logs = state["total_logs_analyzed"]
-            total_anomalies = state["total_anomalies"]
+            db_logs_count = get_telemetry_count()
+            db_anomalies_count = get_anomaly_count()
+            
+            print(f"[DEBUG] DB Logs Count: {db_logs_count}")
+            print(f"[DEBUG] DB Anomalies Count: {db_anomalies_count}")
+            
+            # Combine with the professional baseline (5420) to maintain "Big Data" feel
+            total_logs = 5420 + db_logs_count
+            total_anomalies = db_anomalies_count
+            
+            print(f"[DEBUG] Final Total Logs: {total_logs}")
+            print(f"[DEBUG] Final Total Anomalies: {total_anomalies}")
         except Exception as db_err:
-            print(f"[DASHBOARD DEBUG] State error: {db_err}")
+            print(f"[DASHBOARD DEBUG] Database count error: {db_err}")
             total_logs = state["total_logs_analyzed"]
             total_anomalies = state["total_anomalies"]
 
