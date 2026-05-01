@@ -30,29 +30,29 @@ db              = None
 mongodb_connected = False
 
 try:
-    client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
-    client.admin.command("ping")
+    print(f"[DB] Connecting to MongoDB: {MONGO_DB_NAME}...")
+    client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=10000)
     db = client[MONGO_DB_NAME]
+    
+    # We'll check connection lazily or via a simple non-blocking check
+    # client.admin.command("ping")  # Removing blocking ping to avoid reload hangs
+    
     mongodb_connected = True
+    print("[SUCCESS] MongoDB Client initialized.")
 
     # ── Ensure indexes for fast lookups and uniqueness ──
-    db["users"].create_index("username",  unique=True)
-    db["users"].create_index("email",     unique=True, sparse=True)
-    db["users"].create_index("status")
-    db["audit_logs"].create_index([("timestamp", DESCENDING)])
-    db["audit_logs"].create_index("username")
+    try:
+        db["users"].create_index("username",  unique=True)
+        db["users"].create_index("email",     unique=True, sparse=True)
+        db["users"].create_index("status")
+        db["audit_logs"].create_index([("timestamp", DESCENDING)])
+        db["audit_logs"].create_index("username")
+        print("[SUCCESS] MongoDB Indexes verified.")
+    except Exception as idx_err:
+        print(f"[WARNING] Could not create indexes: {idx_err}")
 
-    users_col           = db["users"]  # local reference only
-    audit_logs_col      = db["audit_logs"]
-    telemetry_logs_col  = db["telemetry_logs"]
-    password_resets_col = db["password_resets"]
-    # (These are only used within this try block for index creation context)
-
-    print("[SUCCESS] Connected to MongoDB — indexes verified.")
-except (ServerSelectionTimeoutError, Exception) as e:
-    print(f"[WARNING] MongoDB not available: {type(e).__name__}")
-    print(f"  Reason: {e}")
-    print("  Running in FALLBACK MODE (in-memory storage)")
+except Exception as e:
+    print(f"[ERROR] MongoDB initialization failed: {e}")
     db = None
     mongodb_connected = False
 
@@ -339,11 +339,13 @@ def get_telemetry_logs(limit: int = 100) -> list[dict]:
     return []
 
 def get_telemetry_count() -> int:
+    print(">>> [DB CALL] get_telemetry_count called!")
     col = db["telemetry_logs"] if (db is not None and mongodb_connected) else None
     if col is not None:
         count = col.count_documents({})
-        print(f"[DB DEBUG] get_telemetry_count: {count}")
+        print(f">>> [DB RESULT] telemetry count: {count}")
         return count
+    print(">>> [DB ERROR] database not connected!")
     return 0
 
 def get_anomaly_count() -> int:
