@@ -4,7 +4,7 @@ import {
   ShieldAlert, TrendingUp, Users, Server, 
   Download, FileText, RefreshCw, CheckCircle, 
   AlertTriangle, BookOpen, ShieldCheck, Activity,
-  Clock, Zap, BarChart2, Lock
+  Clock, Zap, BarChart2, Lock, Mail
 } from 'lucide-react';
 
 // ─────────────────────────────────────────────
@@ -96,6 +96,12 @@ export default function Dashboard() {
   const [exportLoading, setExportLoading] = useState(false);
   const [activeView, setActiveView] = useState('dashboard'); // 'dashboard' | 'report'
 
+  // Contact form state
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [contactForm, setContactForm] = useState({ name: '', email: '', subject: '', message: '' });
+  const [contactLoading, setContactLoading] = useState(false);
+  const [contactMessage, setContactMessage] = useState('');
+
   const role = localStorage.getItem('threxia_role') || 'User';
   const isManager   = role === 'IT Manager';
   const isAdmin     = role === 'System Administrator';
@@ -160,6 +166,32 @@ export default function Dashboard() {
       setExportLoading(false);
     }
   }, []);
+
+  // ── Submit contact query ─────────────────────────────────────────────────
+  const handleContactSubmit = useCallback(async (e) => {
+    e.preventDefault();
+    setContactLoading(true);
+    setContactMessage('');
+    try {
+      const res = await fetch('http://localhost:8000/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(contactForm),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setContactMessage('✓ Inquiry sent successfully! The administrator will respond shortly.');
+        setContactForm({ name: '', email: '', subject: '', message: '' });
+        setTimeout(() => setShowContactModal(false), 2000);
+      } else {
+        setContactMessage('✗ ' + (data.detail || 'Failed to send inquiry.'));
+      }
+    } catch (err) {
+      setContactMessage('✗ Network error. Please try again.');
+    } finally {
+      setContactLoading(false);
+    }
+  }, [contactForm]);
 
   const anomalyPct = dashState.total_logs > 0
     ? ((dashState.total_anomalies / dashState.total_logs) * 100).toFixed(1)
@@ -420,6 +452,84 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* ── Copyright & Contact Footer ── */}
+      <div style={{ marginTop: '3rem', padding: '1.5rem', borderTop: '1px solid rgba(139,92,246,0.15)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+          <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
+            © {new Date().getFullYear()} THREXIA — FAST-NU Lahore · All rights reserved
+          </div>
+          <button
+            onClick={() => setShowContactModal(true)}
+            style={{
+              background: 'transparent',
+              border: '1px solid rgba(139,92,246,0.3)',
+              color: 'var(--primary-purple)',
+              padding: '0.5rem 1rem',
+              borderRadius: '8px',
+              fontSize: '0.8rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}
+          >
+            <Mail size={14} /> Contact Administrator
+          </button>
+        </div>
+      </div>
+
+      {/* ── Contact Modal ── */}
+      {showContactModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 1000, padding: '1rem',
+        }} onClick={() => setShowContactModal(false)}>
+          <div style={{
+            background: 'var(--card-bg)', border: '1px solid rgba(139,92,246,0.2)',
+            borderRadius: '16px', padding: '2rem', maxWidth: '500px', width: '100%',
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h3 style={{ color: 'var(--text-strong)', margin: 0 }}>Contact Administrator</h3>
+              <button onClick={() => setShowContactModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1.5rem' }}>×</button>
+            </div>
+            <form onSubmit={handleContactSubmit}>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Name</label>
+                <input type="text" value={contactForm.name} onChange={e => setContactForm({...contactForm, name: e.target.value})} required
+                  style={{ width: '100%', padding: '0.75rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: '8px', color: 'var(--text-strong)', fontSize: '0.9rem' }} />
+              </div>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Email</label>
+                <input type="email" value={contactForm.email} onChange={e => setContactForm({...contactForm, email: e.target.value})} required
+                  style={{ width: '100%', padding: '0.75rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: '8px', color: 'var(--text-strong)', fontSize: '0.9rem' }} />
+              </div>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Subject</label>
+                <input type="text" value={contactForm.subject} onChange={e => setContactForm({...contactForm, subject: e.target.value})} required
+                  style={{ width: '100%', padding: '0.75rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: '8px', color: 'var(--text-strong)', fontSize: '0.9rem' }} />
+              </div>
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Message</label>
+                <textarea value={contactForm.message} onChange={e => setContactForm({...contactForm, message: e.target.value})} required rows={4}
+                  style={{ width: '100%', padding: '0.75rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: '8px', color: 'var(--text-strong)', fontSize: '0.9rem', resize: 'vertical' }} />
+              </div>
+              {contactMessage && (
+                <div style={{ marginBottom: '1rem', padding: '0.75rem', borderRadius: '8px', background: contactMessage.includes('success') ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)', color: contactMessage.includes('success') ? 'var(--success-green)' : 'var(--danger-red)', fontSize: '0.85rem' }}>
+                  {contactMessage}
+                </div>
+              )}
+              <button type="submit" disabled={contactLoading} style={{
+                width: '100%', padding: '0.875rem', background: 'linear-gradient(90deg, #7C3AED 0%, #3B82F6 100%)',
+                border: 'none', borderRadius: '8px', color: '#fff', fontSize: '0.9rem', fontWeight: 600, cursor: contactLoading ? 'not-allowed' : 'pointer', opacity: contactLoading ? 0.7 : 1,
+              }}>
+                {contactLoading ? 'Sending...' : 'Send Inquiry'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

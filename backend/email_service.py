@@ -213,7 +213,7 @@ def notify_user_approved(
       <a class="cta-btn" href="http://localhost:5173/login">Access THREXIA Platform →</a>
 
       <p style="font-size:13px;color:#475569;">
-        If you did not request access to THREXIA, please contact the system administrator immediately at <span class="highlight">buttanas813@gmail.com</span>.
+        If you did not request access to THREXIA, please contact the system administrator immediately at <span class="highlight">musmansaboor355@gmail.com</span>.
       </p>
     """
     return _send(email, "[THREXIA] Intelligence Clearance Granted — Your Credentials", _base_template(content))
@@ -241,7 +241,7 @@ def notify_user_rejected(
 
       {reason_block}
 
-      <p>If you believe this decision was made in error, or if you have additional information to support your request, please contact the administrator directly at <span class="highlight">buttanas813@gmail.com</span>.</p>
+      <p>If you believe this decision was made in error, or if you have additional information to support your request, please contact the administrator directly at <span class="highlight">musmansaboor355@gmail.com</span>.</p>
 
       <p style="font-size:13px;color:#475569;">You may submit a new request at any time via the THREXIA registration portal.</p>
     """
@@ -273,6 +273,43 @@ def notify_admin_password_reset(username: str, email: str) -> bool:
       <a class="cta-btn" href="http://localhost:5173/admin/access-control">Go to Access Control →</a>
     """
     return _send(ADMIN_EMAIL, f"[THREXIA] Password Reset Request — {username}", _base_template(content))
+
+
+def notify_admin_contact_query(name: str, email: str, subject: str, message: str) -> bool:
+    """Alert the admin about a general inquiry or feedback from a user."""
+    content = f"""
+      <h2>📬 New Contact Inquiry</h2>
+      <p>A new inquiry has been submitted through the THREXIA contact form.</p>
+
+      <div class="info-box">
+        <div class="info-row">
+          <span class="info-label">Name</span>
+          <span class="info-value">{name}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Email</span>
+          <span class="info-value">{email}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Subject</span>
+          <span class="info-value">{subject}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Message</span>
+          <span class="info-value" style="max-width:300px;text-align:right;">{message}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Submitted At</span>
+          <span class="info-value">{datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}</span>
+        </div>
+      </div>
+
+      <p>Log in as a <span class="highlight">System Administrator</span> to respond to this inquiry.</p>
+      <a class="cta-btn" href="http://localhost:5173">Go to THREXIA Dashboard →</a>
+
+      <p style="font-size:13px;color:#475569;">This is an automated notification from the THREXIA contact form.</p>
+    """
+    return _send(ADMIN_EMAIL, f"[THREXIA] Contact Inquiry — {subject}", _base_template(content))
 
 
 def notify_user_password_reset_fulfilled(email: str, temp_pass: str) -> bool:

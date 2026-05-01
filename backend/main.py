@@ -60,6 +60,7 @@ from email_service import (
     notify_user_rejected,
     notify_admin_password_reset,
     notify_user_password_reset_fulfilled,
+    notify_admin_contact_query,
 )
 
 # ─────────────────────────────────────────────
@@ -363,6 +364,45 @@ def forgot_password(request: ForgotPasswordRequest):
     notify_admin_password_reset(user["username"], user["email"])
     
     return {"message": "Your reset request has been sent to the system administrator."}
+
+
+# ─────────────────────────────────────────────
+#  Contact Query Endpoint
+# ─────────────────────────────────────────────
+
+class ContactQueryRequest(BaseModel):
+    name: str
+    email: str
+    subject: str
+    message: str
+
+
+@app.post("/api/contact", tags=["Contact"])
+def submit_contact_query(request: ContactQueryRequest, background_tasks: BackgroundTasks):
+    """
+    Submit a general inquiry or feedback to the system administrator.
+    Anyone can use this endpoint without authentication.
+    """
+    # Validate inputs
+    if not request.name or len(request.name.strip()) < 2:
+        raise HTTPException(status_code=400, detail="Name must be at least 2 characters.")
+    if not request.email or "@" not in request.email:
+        raise HTTPException(status_code=400, detail="Valid email address is required.")
+    if not request.subject or len(request.subject.strip()) < 3:
+        raise HTTPException(status_code=400, detail="Subject must be at least 3 characters.")
+    if not request.message or len(request.message.strip()) < 10:
+        raise HTTPException(status_code=400, detail="Message must be at least 10 characters.")
+
+    # Send email to admin
+    background_tasks.add_task(
+        notify_admin_contact_query,
+        name=request.name,
+        email=request.email,
+        subject=request.subject,
+        message=request.message,
+    )
+
+    return {"message": "Your inquiry has been submitted. The system administrator will respond shortly."}
 
 
 # ─────────────────────────────────────────────
