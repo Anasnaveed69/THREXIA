@@ -173,6 +173,19 @@ scaled_input = scaler.transform(raw_features)
 prediction = model.predict(scaled_input) # -1 = threat, 1 = normal
 ```
 
+### Production Deployment (Northflank)
+
+For a fast, always-on backend without cold starts, we recommend **Northflank**:
+
+1.  **Create Service**: Select "Service" -> "Combined Service" on Northflank.
+2.  **Source**: Connect your GitHub repository.
+3.  **Build Settings**:
+    *   **Build Type**: Dockerfile
+    *   **Context**: `backend/`
+    *   **Dockerfile Path**: `Dockerfile`
+4.  **Environment Variables**: Add your `MONGO_URI`, `SECRET_KEY`, etc.
+5.  **Networking**: Set port to `8000`.
+
 **Planned future extensions:**
 - Real-time log streaming via WebSockets
 - Integration with live enterprise environments
