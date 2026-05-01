@@ -74,13 +74,7 @@ export default function Docs() {
 
       {/* ── Page header ─────────────────────────────── */}
       <div style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '2rem', marginBottom: '4rem' }}>
-        <h1 style={{
-          fontSize: '2.4rem',
-          fontWeight: 800,
-          color: 'var(--text-strong)',
-          letterSpacing: '0.02em',
-          marginBottom: '0.5rem'
-        }}>
+        <h1 className="page-title">
           Project Documentation
         </h1>
         <p style={{

@@ -296,7 +296,7 @@ const AdminAccessControl = () => {
                                     const isMe = session.username === myUsername;
                                     return (
                                         <tr key={session.username} className="log-row">
-                                            <td>
+                                            <td data-label="USER">
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                                                     <div style={{ width: 36, height: 36, borderRadius: '10px', background: roleStyle.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: roleStyle.color }}>
                                                         <User size={18} />
@@ -307,17 +307,17 @@ const AdminAccessControl = () => {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td>
+                                            <td data-label="ROLE">
                                                 <span className="badge" style={{ background: roleStyle.bg, color: roleStyle.color, borderColor: `${roleStyle.color}40` }}>
                                                     {session.role}
                                                 </span>
                                             </td>
-                                            <td>
+                                            <td data-label="STARTED">
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.82rem' }}>
                                                     <Clock size={13} /> {session.login_time}
                                                 </div>
                                             </td>
-                                            <td>
+                                            <td data-label="STATUS">
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                                     <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--success-green)', display: 'inline-block', boxShadow: '0 0 6px var(--success-green)' }} />
                                                     <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--success-green)' }}>
@@ -325,7 +325,7 @@ const AdminAccessControl = () => {
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td>
+                                            <td data-label="COMMAND">
                                                 {isMe ? (
                                                     <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', opacity: 0.5 }}>—</span>
                                                 ) : (

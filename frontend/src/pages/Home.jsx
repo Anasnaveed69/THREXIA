@@ -10,8 +10,17 @@ import Sparklines from '../components/Sparklines';
 import CyberGrid from '../components/CyberGrid';
 import ShinyText from '../components/ShinyText';
 import BlurText from '../components/BlurText';
+import CyberButton from '../components/CyberButton';
+import { API_BASE_URL } from '../apiConfig';
+import { useEffect } from 'react';
 
 export default function Home() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   // Contact form state
   const [showContactModal, setShowContactModal] = useState(false);
   const [contactForm, setContactForm] = useState({ name: '', email: '', subject: '', message: '' });
@@ -24,7 +33,7 @@ export default function Home() {
     setContactLoading(true);
     setContactMessage('');
     try {
-      const res = await fetch('http://localhost:8000/api/contact', {
+      const res = await fetch(`${API_BASE_URL}/api/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(contactForm),
@@ -44,14 +53,14 @@ export default function Home() {
     }
   }, [contactForm]);
 
-  
+
   return (
     <div className="login-bg" style={{ position: 'relative', overflow: 'hidden' }}>
       {/* Tactical Scanner Background (High-Visibility Dark Mode Tune) */}
-      <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, opacity: 0.7 }}>
+      <div className="home-scanner-bg" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, opacity: 0.7 }}>
         <ThrexiaScanner
           speed={0.4}
-          scale={0.9}
+          scale={isMobile ? 1.5 : 0.9}
           ringCount={10}
           spokeCount={12}
           ringThickness={0.015}
@@ -86,11 +95,49 @@ export default function Home() {
             direction="bottom"
             className="hero-subtitle"
           />
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
-            <StarBorder as={Link} to="/login" innerClassName="btn-glowing" color="var(--primary-glow)" speed="4s">
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            gap: isMobile ? '1rem' : '1.5rem', 
+            flexDirection: isMobile ? 'column' : 'row',
+            width: '100%',
+            padding: isMobile ? '0 1rem' : '0'
+          }}>
+            <StarBorder 
+              as={Link} 
+              to="/login" 
+              innerClassName="btn-glowing" 
+              color="var(--primary-glow)" 
+              speed="4s"
+              style={{ width: isMobile ? '100%' : 'auto' }}
+              innerStyle={{ width: isMobile ? '100%' : 'auto', textAlign: 'center', justifyContent: 'center' }}
+            >
               Initialize Gateway <ChevronRight size={18} style={{ marginLeft: '0.5rem' }} />
             </StarBorder>
-            <StarBorder as={Link} to="/docs" innerClassName="btn-secondary" color="rgba(255,255,255,0.4)" innerStyle={{ padding: '1rem 2rem', textDecoration: 'none', borderRadius: '4px', border: '1px solid var(--border-color)', color: 'var(--text-strong)', fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--panel-bg)', backdropFilter: 'blur(5px)' }}>
+            <StarBorder 
+              as={Link} 
+              to="/docs" 
+              innerClassName="btn-secondary" 
+              color="rgba(255,255,255,0.4)" 
+              style={{ width: isMobile ? '100%' : 'auto' }}
+              innerStyle={{ 
+                width: isMobile ? '100%' : 'auto',
+                padding: '1rem 2rem', 
+                textDecoration: 'none', 
+                borderRadius: '4px', 
+                border: '1px solid var(--border-color)', 
+                color: 'var(--text-strong)', 
+                fontWeight: 600, 
+                fontSize: '0.9rem', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                gap: '0.5rem', 
+                background: 'var(--panel-bg)', 
+                backdropFilter: 'blur(5px)' 
+              }}
+            >
               Read Documentation <BookOpen size={18} />
             </StarBorder>
           </div>
@@ -181,25 +228,16 @@ export default function Home() {
         <div style={{ marginTop: '2rem', padding: '1.5rem', borderTop: '1px solid rgba(139,92,246,0.15)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
-              © {new Date().getFullYear()} THREXIA — FAST-NU Lahore · All rights reserved
+              © {new Date().getFullYear()} THREXIA | FAST-NU Lahore · All rights reserved
             </div>
-            <button
+
+            <CyberButton
               onClick={() => setShowContactModal(true)}
-              style={{
-                background: 'transparent',
-                border: '1px solid rgba(139,92,246,0.3)',
-                color: 'var(--primary-purple)',
-                padding: '0.5rem 1rem',
-                borderRadius: '8px',
-                fontSize: '0.8rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-              }}
+              style={{ scale: '0.85', transformOrigin: 'right' }}
             >
               <Mail size={14} /> Contact Administrator
-            </button>
+            </CyberButton>
+
           </div>
         </div>
 
@@ -207,50 +245,88 @@ export default function Home() {
         {showContactModal && (
           <div style={{
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(2, 2, 6, 0.85)',
+            backdropFilter: 'blur(10px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
             zIndex: 1000, padding: '1rem',
+            animation: 'fadeIn 0.3s ease-out'
           }} onClick={() => setShowContactModal(false)}>
             <div style={{
-              background: 'var(--card-bg)', border: '1px solid rgba(139,92,246,0.2)',
-              borderRadius: '16px', padding: '2rem', maxWidth: '500px', width: '100%',
+              background: 'linear-gradient(135deg, rgba(13, 13, 23, 0.95), rgba(6, 6, 12, 0.98))',
+              border: '1px solid rgba(139, 92, 246, 0.3)',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 92, 246, 0.1)',
+              borderRadius: '20px', padding: '2.5rem', maxWidth: '520px', width: '100%',
+              position: 'relative', overflow: 'hidden'
             }} onClick={e => e.stopPropagation()}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                <h3 style={{ color: 'var(--text-strong)', margin: 0 }}>Contact Administrator</h3>
-                <button onClick={() => setShowContactModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1.5rem' }}>×</button>
+              {/* Subtle Animated Background for Modal */}
+              <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, opacity: 0.05, pointerEvents: 'none' }}>
+                <CyberGrid size={20} />
               </div>
-              <form onSubmit={handleContactSubmit}>
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Name</label>
-                  <input type="text" value={contactForm.name} onChange={e => setContactForm({...contactForm, name: e.target.value})} required
-                    style={{ width: '100%', padding: '0.75rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: '8px', color: 'var(--text-strong)', fontSize: '0.9rem' }} />
-                </div>
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Email</label>
-                  <input type="email" value={contactForm.email} onChange={e => setContactForm({...contactForm, email: e.target.value})} required
-                    style={{ width: '100%', padding: '0.75rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: '8px', color: 'var(--text-strong)', fontSize: '0.9rem' }} />
-                </div>
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Subject</label>
-                  <input type="text" value={contactForm.subject} onChange={e => setContactForm({...contactForm, subject: e.target.value})} required
-                    style={{ width: '100%', padding: '0.75rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: '8px', color: 'var(--text-strong)', fontSize: '0.9rem' }} />
-                </div>
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Message</label>
-                  <textarea value={contactForm.message} onChange={e => setContactForm({...contactForm, message: e.target.value})} required rows={4}
-                    style={{ width: '100%', padding: '0.75rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: '8px', color: 'var(--text-strong)', fontSize: '0.9rem', resize: 'vertical' }} />
-                </div>
-                {contactMessage && (
-                  <div style={{ marginBottom: '1rem', padding: '0.75rem', borderRadius: '8px', background: contactMessage.includes('success') ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)', color: contactMessage.includes('success') ? 'var(--success-green)' : 'var(--danger-red)', fontSize: '0.85rem' }}>
-                    {contactMessage}
+
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                  <div>
+                    <h3 style={{ color: 'var(--text-strong)', margin: 0, fontSize: '1.5rem', letterSpacing: '0.05em' }}>
+                      SECURE INQUIRY
+                    </h3>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: '0.25rem 0 0 0', opacity: 0.7 }}>Direct terminal uplink to system administrator</p>
                   </div>
-                )}
-                <button type="submit" disabled={contactLoading} style={{
-                  width: '100%', padding: '0.875rem', background: 'linear-gradient(90deg, #7C3AED 0%, #3B82F6 100%)',
-                  border: 'none', borderRadius: '8px', color: '#fff', fontSize: '0.9rem', fontWeight: 600, cursor: contactLoading ? 'not-allowed' : 'pointer', opacity: contactLoading ? 0.7 : 1,
-                }}>
-                  {contactLoading ? 'Sending...' : 'Send Inquiry'}
-                </button>
-              </form>
+                  <button onClick={() => setShowContactModal(false)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '1.2rem', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>×</button>
+                </div>
+
+                <form onSubmit={handleContactSubmit}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                    <div>
+                      <label style={{ display: 'block', color: 'rgba(139, 92, 246, 0.8)', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.1em' }}>Full Name</label>
+                      <input type="text" value={contactForm.name} onChange={e => setContactForm({ ...contactForm, name: e.target.value })} required
+                        style={{ width: '100%', padding: '0.85rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(139, 92, 246, 0.15)', borderRadius: '10px', color: 'var(--text-strong)', fontSize: '0.9rem', outline: 'none', transition: 'border-color 0.2s' }}
+                        onFocus={e => e.target.style.borderColor = 'rgba(139, 92, 246, 0.5)'}
+                        onBlur={e => e.target.style.borderColor = 'rgba(139, 92, 246, 0.15)'}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', color: 'rgba(139, 92, 246, 0.8)', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.1em' }}>Email Address</label>
+                      <input type="email" value={contactForm.email} onChange={e => setContactForm({ ...contactForm, email: e.target.value })} required
+                        style={{ width: '100%', padding: '0.85rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(139, 92, 246, 0.15)', borderRadius: '10px', color: 'var(--text-strong)', fontSize: '0.9rem', outline: 'none' }}
+                        onFocus={e => e.target.style.borderColor = 'rgba(139, 92, 246, 0.5)'}
+                        onBlur={e => e.target.style.borderColor = 'rgba(139, 92, 246, 0.15)'}
+                      />
+                    </div>
+                  </div>
+                  <div style={{ marginBottom: '1rem' }}>
+                    <label style={{ display: 'block', color: 'rgba(139, 92, 246, 0.8)', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.1em' }}>Subject</label>
+                    <input type="text" value={contactForm.subject} onChange={e => setContactForm({ ...contactForm, subject: e.target.value })} required
+                      style={{ width: '100%', padding: '0.85rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(139, 92, 246, 0.15)', borderRadius: '10px', color: 'var(--text-strong)', fontSize: '0.9rem', outline: 'none' }}
+                      onFocus={e => e.target.style.borderColor = 'rgba(139, 92, 246, 0.5)'}
+                      onBlur={e => e.target.style.borderColor = 'rgba(139, 92, 246, 0.15)'}
+                    />
+                  </div>
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <label style={{ display: 'block', color: 'rgba(139, 92, 246, 0.8)', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.1em' }}>Message Content</label>
+                    <textarea value={contactForm.message} onChange={e => setContactForm({ ...contactForm, message: e.target.value })} required rows={4}
+                      style={{ width: '100%', padding: '0.85rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(139, 92, 246, 0.15)', borderRadius: '10px', color: 'var(--text-strong)', fontSize: '0.9rem', resize: 'none', outline: 'none' }}
+                      onFocus={e => e.target.style.borderColor = 'rgba(139, 92, 246, 0.5)'}
+                      onBlur={e => e.target.style.borderColor = 'rgba(139, 92, 246, 0.15)'}
+                    />
+                  </div>
+
+                  {contactMessage && (
+                    <div style={{
+                      marginBottom: '1.5rem', padding: '1rem', borderRadius: '10px',
+                      background: contactMessage.includes('success') ? 'rgba(16, 185, 129, 0.05)' : 'rgba(239, 68, 68, 0.05)',
+                      border: `1px solid ${contactMessage.includes('success') ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`,
+                      color: contactMessage.includes('success') ? 'var(--success-green)' : '#EF4444',
+                      fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem'
+                    }}>
+                      {contactMessage}
+                    </div>
+                  )}
+
+                  <button type="submit" disabled={contactLoading} className="btn-primary" style={{ width: '100%', padding: '1rem' }}>
+                    {contactLoading ? 'SENDING...' : 'TRANSMIT INQUIRY'}
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
         )}

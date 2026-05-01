@@ -113,7 +113,7 @@ export default function Logs() {
 
       <div className="logs-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', gap: '1rem', flexWrap: 'wrap' }}>
         {/* Filter Navigation Bar */}
-        <div style={{ display: 'flex', gap: '0.75rem', background: 'var(--panel-bg)', padding: '0.4rem', borderRadius: '8px', border: '1px solid var(--border-color)', backdropFilter: 'blur(10px)', flex: '1', minWidth: '280px' }}>
+        <div className="tab-container" style={{ flex: '1', minWidth: '280px', marginBottom: 0 }}>
           <button
             onClick={() => setFilter('all')}
             style={{ flex: 1, padding: '0.5rem', borderRadius: '4px', border: 'none', background: filter === 'all' ? 'var(--primary-purple)' : 'transparent', color: filter === 'all' ? 'white' : 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 600, transition: '0.3s' }}
@@ -173,15 +173,15 @@ export default function Logs() {
                     }}
                     className="log-row"
                   >
-                    <td style={{ color: 'var(--text-secondary)' }}>
+                    <td data-label="TIME">
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         {expandedId === log.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                         {new Date(log.time).toLocaleString([], { dateStyle: 'short', timeStyle: 'medium' })}
                       </div>
                     </td>
-                    <td style={{ fontWeight: 600, color: log.type === 'threat' ? 'var(--danger-red)' : 'var(--primary-blue)' }}>{log.id}</td>
-                    <td>{log.user}</td>
-                    <td>
+                    <td data-label="ID" style={{ fontWeight: 600, color: log.type === 'threat' ? 'var(--danger-red)' : 'var(--primary-blue)' }}>{log.id}</td>
+                    <td data-label="USER">{log.user}</td>
+                    <td data-label="AI CONFIDENCE">
                       <div style={{ display: 'flex', alignItems: 'center' }}>
                         <div className="confidence-bar-bg" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
                           <div
@@ -196,12 +196,12 @@ export default function Logs() {
                         <span style={{ fontWeight: 600 }}>{log.confidence_score}%</span>
                       </div>
                     </td>
-                    <td>
+                    <td data-label="SUMMARY">
                       {log.explanations.map((exp, i) => (
                         <div key={i} style={{ marginBottom: log.explanations.length > 1 ? '0.25rem' : '0', fontSize: '0.85rem' }}>• {exp}</div>
                       ))}
                     </td>
-                    <td>
+                    <td data-label="STATUS">
                       {log.action_status === 'resolved' ? (
                         <span className="badge badge-success">
                           <CheckCircle2 size={13} /> Resolved
@@ -219,7 +219,7 @@ export default function Logs() {
                     </td>
 
                     {isAnalyst && (
-                      <td onClick={e => e.stopPropagation()}>
+                      <td data-label="COMMAND" onClick={e => e.stopPropagation()}>
                         {log.type === 'threat' && !log.action_status ? (
                           <div style={{ display: 'flex', gap: '0.4rem' }}>
                             <button onClick={() => handleAction(log.id, 'resolved')} className="incident-btn incident-btn-resolve" title="Mark as Resolved">
@@ -318,11 +318,35 @@ export default function Logs() {
                   <div className="log-card-value">{log.confidence_score}%</div>
                 </div>
               </div>
-              <div style={{ marginBottom: '1rem' }}>
+              <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span className={`badge ${log.type === 'threat' ? 'badge-danger' : 'badge-success'}`}>
                   {log.status}
                 </span>
 
+                {isAnalyst && log.type === 'threat' && !log.action_status && (
+                  <div style={{ display: 'flex', gap: '0.5rem' }} onClick={e => e.stopPropagation()}>
+                    <button 
+                      onClick={() => handleAction(log.id, 'resolved')} 
+                      className="incident-btn incident-btn-resolve"
+                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.7rem' }}
+                    >
+                      Resolve
+                    </button>
+                    <button 
+                      onClick={() => handleAction(log.id, 'escalated')} 
+                      className="incident-btn incident-btn-escalate"
+                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.7rem' }}
+                    >
+                      Escalate
+                    </button>
+                  </div>
+                )}
+                
+                {isAnalyst && log.action_status && (
+                  <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                    {log.action_status.toUpperCase()}
+                  </span>
+                )}
               </div>
 
               <AnimatePresence>

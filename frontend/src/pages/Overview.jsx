@@ -127,7 +127,7 @@ export default function Overview() {
       {/* ── Header ──────────────────────────────────── */}
       <motion.div variants={itemVariants} style={{ marginBottom: '3rem', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', marginBottom: '0.6rem' }}>
-          <h1 className="page-title" style={{ margin: 0, fontSize: '2.5rem', letterSpacing: '-0.03em', color: 'var(--text-primary)' }}>
+          <h1 className="page-title" style={{ margin: 0, letterSpacing: '-0.03em', color: 'var(--text-primary)' }}>
             Comprehensive Audit Trail
           </h1>
           <motion.div 
@@ -193,7 +193,7 @@ export default function Overview() {
       </motion.div>
 
       {/* ── Core Intelligence Grid ──────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+      <div className="overview-grid" style={{ marginBottom: '2rem' }}>
         
         {/* Threat Posture Card */}
         <motion.div variants={itemVariants}>
@@ -217,7 +217,7 @@ export default function Overview() {
                 </div>
               </div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div className="stat-card-grid" style={{ marginBottom: '1.5rem' }}>
                 <div>
                   <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.2rem' }}>ANOMALY RATE</div>
                   <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-strong)' }}>{rate}%</div>
@@ -290,7 +290,7 @@ export default function Overview() {
       </div>
 
       {/* ── Detailed Analytics Grid ─────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+      <div className="overview-grid analytics-grid" style={{ marginBottom: '2.5rem' }}>
         
         {/* Infrastructure Module */}
         <motion.div variants={itemVariants}>
@@ -396,7 +396,7 @@ export default function Overview() {
             <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', padding: '2px 8px', border: '1px solid currentColor', borderRadius: '4px', opacity: 0.5 }}>AUTHORIZATION v4</div>
           </div>
           
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+          <div className="overview-grid access-map-grid">
             {ALL_MODULES.map((m) => {
               const hasAccess = access.includes(m.key);
               const cardColor = m.color;

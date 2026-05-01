@@ -2361,3 +2361,466 @@ body.light-mode .login-input:-webkit-autofill:active {
   transition: all 0.2s ease;
   white-space: nowrap;
 }
+
+/* ── Premium Cyber Visual Effects ── */
+
+.card-glow {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-glow:hover {
+  border-color: var(--border-highlight) !important;
+  box-shadow: 0 0 25px rgba(139, 92, 246, 0.1), inset 0 0 10px rgba(139, 92, 246, 0.05) !important;
+  transform: translateY(-2px);
+}
+
+.neon-text {
+  text-shadow: 0 0 10px var(--primary-glow), 0 0 20px rgba(139, 92, 246, 0.1);
+}
+
+.holographic-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.holographic-shimmer::before {
+  content: "";
+  position: absolute;
+  top: -150%;
+  left: -150%;
+  width: 300%;
+  height: 300%;
+  background: linear-gradient(
+    45deg,
+    transparent 45%,
+    rgba(255, 255, 255, 0.03) 50%,
+    transparent 55%
+  );
+  animation: shimmer-swipe 4s infinite linear;
+  pointer-events: none;
+}
+
+@keyframes shimmer-swipe {
+  0% { transform: translate(-20%, -20%); }
+  100% { transform: translate(20%, 20%); }
+}
+
+.digital-number {
+  font-family: 'JetBrains Mono', 'Roboto Mono', monospace;
+  letter-spacing: -0.05em;
+}
+
+/* ── Mobile Responsive Overrides ── */
+
+@media (max-width: 992px) {
+  .grid-dashboard {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
+  
+  .dashboard-container {
+    padding: 1.5rem 1rem !important;
+    margin-top: 70px !important;
+  }
+  
+  .exec-metrics-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  .navbar {
+    padding: 0 1rem !important;
+  }
+  
+  .nav-links {
+    display: none; /* Hide standard links on mobile */
+  }
+  
+  .brand-text {
+    font-size: 1.1rem !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .exec-metrics-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .metric-value {
+    font-size: 1.8rem !important;
+  }
+  
+  .card {
+    padding: 1.25rem !important;
+  }
+  
+  /* Shrink charts for mobile height */
+  .card[style*="height: 480px"],
+  .card[style*="min-height: 400px"] {
+    height: auto !important;
+    min-height: 350px !important;
+  }
+
+  .digital-number {
+    font-size: 1.8rem !important;
+  }
+}
+
+/* ── Tab Container Design ── */
+.tab-container {
+  display: flex;
+  gap: 1rem;
+  background: var(--panel-bg);
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  backdrop-filter: blur(10px);
+  width: fit-content;
+  margin-bottom: 2rem;
+}
+
+.tab-container button {
+  transition: all 0.3s ease;
+}
+
+/* ── Overview Grid Design ── */
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.analytics-grid {
+  grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+}
+
+.access-map-grid {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.stat-card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* ── Home Page Mobile Refinements ── */
+
+@media (max-width: 768px) {
+  .hero-section {
+    padding: 3rem 1rem 1rem !important; /* Tighter padding for mobile hero */
+    position: relative;
+    z-index: 1;
+  }
+
+  .home-scanner-bg {
+    height: 100vh !important; /* Keep radar focus in viewport */
+    top: -100px !important; /* Shift center slightly up to meet hero text */
+    opacity: 0.8 !important;
+  }
+  
+  .hero-title {
+    font-size: 2.8rem !important;
+    letter-spacing: 0.1em !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .hero-subtitle {
+    font-size: 0.95rem !important;
+    padding: 0 1rem !important;
+    margin-bottom: 2.5rem !important;
+  }
+  
+  .metrics-bar {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 1.5rem 0.5rem !important;
+    margin: 1rem 1rem 3rem !important;
+    padding: 1.5rem 1rem !important;
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.15) !important;
+    border: 1px solid rgba(139, 92, 246, 0.3) !important;
+  }
+  
+  .feature-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+    margin-top: 2rem !important;
+    padding: 0 1rem 4rem !important;
+  }
+  
+  .home-card {
+    padding: 1.75rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-title {
+    font-size: 2.2rem !important;
+  }
+  
+  .metrics-bar {
+    grid-template-columns: 1fr !important; /* Stack fully on very small screens */
+    text-align: center;
+  }
+}
+
+/* ── Global Mobile Polish Overrides ── */
+
+@media (max-width: 768px) {
+  /* Admin Access Control */
+  .admin-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 1.5rem !important;
+  }
+
+  .admin-tabs {
+    width: 100% !important;
+    overflow-x: visible !important; /* Remove slider */
+    padding-bottom: 0 !important;
+    justify-content: center !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important; /* 2 buttons per row */
+    gap: 0.5rem !important;
+  }
+
+  .admin-tab {
+    white-space: normal !important;
+    flex-shrink: 1 !important;
+    text-align: center !important;
+    justify-content: center !important;
+    font-size: 0.75rem !important;
+    padding: 0.75rem 0.5rem !important;
+    border-radius: 8px !important;
+    background: rgba(255,255,255,0.03) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-secondary) !important;
+    transition: all 0.3s ease !important;
+  }
+
+  /* Active states with Laptop View colors */
+  .active-access {
+    background: rgba(139, 92, 246, 0.2) !important;
+    border-color: var(--primary-purple) !important;
+    color: white !important;
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.3) !important;
+  }
+
+  .active-passwords {
+    background: rgba(59, 130, 246, 0.2) !important;
+    border-color: var(--primary-blue) !important;
+    color: white !important;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.3) !important;
+  }
+
+  .active-sessions {
+    background: rgba(16, 185, 129, 0.2) !important;
+    border-color: var(--success-green) !important;
+    color: white !important;
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.3) !important;
+  }
+  
+  /* Third tab takes full width */
+  .admin-tab:last-child {
+    grid-column: span 2 !important;
+  }
+
+  .admin-card {
+    padding: 1.25rem !important;
+  }
+
+  .admin-user-info {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+  }
+
+  .admin-user-meta {
+    flex-direction: column !important;
+    gap: 0.4rem !important;
+    align-items: center !important;
+  }
+
+  .admin-actions {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 0.75rem !important;
+  }
+
+  .btn-admin {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* Logs & Audit Trail Filters */
+  .logs-toolbar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 1rem !important;
+  }
+
+  /* Log Filters: 3 buttons in a grid */
+  .logs-toolbar .tab-container {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+  
+  .logs-toolbar button {
+    border: 1px solid var(--border-color) !important;
+    border-radius: 8px !important;
+    background: rgba(255,255,255,0.03) !important;
+    padding: 0.75rem 0 !important;
+  }
+
+  .logs-info {
+    text-align: center !important;
+  }
+
+  .analyst-stat-pill {
+    flex: 1 !important;
+    justify-content: center !important;
+    font-size: 0.65rem !important;
+  }
+
+  /* Tables to Cards Transition */
+  .data-table thead {
+    display: none !important; /* Hide headers on mobile */
+  }
+
+  .data-table, .data-table tbody, .data-table tr, .data-table td {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .data-table tr {
+    margin-bottom: 1rem !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 12px !important;
+    padding: 1rem !important;
+    background: rgba(255,255,255,0.02) !important;
+  }
+
+  .data-table td {
+    text-align: left !important;
+    padding: 0.5rem 0 !important;
+    border: none !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+  }
+
+  .data-table td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+  }
+
+  /* Overview Page */
+  .overview-grid, .analytics-grid, .access-map-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  .page-title {
+    font-size: 1.8rem !important;
+  }
+
+  .stat-card-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Analyze Page Refinements */
+  .grid-dashboard {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Docs Page Refinements */
+  .architecture-steps {
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+  
+  .docs-intro-title {
+    font-size: 1.8rem !important;
+  }
+
+  /* Security Settings */
+  .security-container {
+    padding: 1rem !important;
+  }
+
+  .security-footer {
+    flex-direction: column !important;
+    text-align: center !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-tabs {
+    gap: 0.25rem !important;
+  }
+  
+  .admin-tab {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.65rem !important;
+  }
+  
+  /* Hero Title scale for very small screens */
+  .page-title {
+    font-size: 1.5rem !important;
+  }
+
+  .stat-card-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Tab Container Mobile Grid */
+  .tab-container {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    width: 100% !important;
+    gap: 0.5rem !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+
+  .tab-container button {
+    width: 100% !important;
+    padding: 1rem 0.5rem !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 8px !important;
+    background: rgba(255,255,255,0.03); /* Removed !important to allow inline active styles */
+    color: var(--text-secondary) !important;
+    font-weight: 700 !important;
+  }
+
+  /* Vibrant Incident Buttons on Mobile */
+  .incident-btn-resolve {
+    background: rgba(16, 185, 129, 0.2) !important;
+    border-color: var(--success-green) !important;
+    color: var(--success-green) !important;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.2) !important;
+    text-shadow: 0 0 5px rgba(16, 185, 129, 0.5) !important;
+  }
+
+  .incident-btn-escalate {
+    background: rgba(249, 115, 22, 0.2) !important;
+    border-color: #F97316 !important;
+    color: #F97316 !important;
+    box-shadow: 0 0 10px rgba(249, 115, 22, 0.2) !important;
+    text-shadow: 0 0 5px rgba(249, 115, 22, 0.5) !important;
+  }
+
+  /* Specific color overrides for active buttons in tab-container (Analyze/Logs) */
+  .tab-container button[style*="background: var(--primary-purple)"],
+  .tab-container button[style*="background: var(--danger-red)"],
+  .tab-container button[style*="background: var(--success-green)"] {
+     /* These are already handled by inline styles in React, but we ensure they look good */
+     box-shadow: 0 0 15px currentColor !important;
+     color: white !important;
+  }
+}

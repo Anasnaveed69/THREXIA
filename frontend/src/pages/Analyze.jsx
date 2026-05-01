@@ -147,7 +147,7 @@ export default function Analyze() {
       </div>
 
       {/* Tab Navigation */}
-      <div style={{ display: 'flex', gap: '1rem', background: 'var(--panel-bg)', padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--border-color)', backdropFilter: 'blur(10px)', width: 'fit-content', marginBottom: '2rem' }}>
+      <div className="tab-container">
         <button 
           onClick={() => setActiveTab('manual')}
           style={{ 
@@ -363,14 +363,14 @@ export default function Analyze() {
                       <tbody>
                         {csvResults.results.map((result, idx) => (
                           <tr key={idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                            <td style={{ padding: '0.5rem', color: 'var(--text-secondary)' }}>{result.row}</td>
-                            <td style={{ padding: '0.5rem', color: result.error ? 'var(--danger-red)' : result.prediction === 'Threat' ? 'var(--danger-red)' : 'var(--primary-blue)' }}>
+                            <td data-label="ROW" style={{ padding: '0.5rem', color: 'var(--text-secondary)' }}>{result.row}</td>
+                            <td data-label="PREDICTION" style={{ padding: '0.5rem', color: result.error ? 'var(--danger-red)' : result.prediction === 'Threat' ? 'var(--danger-red)' : 'var(--primary-blue)' }}>
                               {result.error ? 'Error' : result.prediction}
                             </td>
-                            <td style={{ padding: '0.5rem', color: 'var(--text-secondary)' }}>
+                            <td data-label="CONFIDENCE" style={{ padding: '0.5rem', color: 'var(--text-secondary)' }}>
                               {result.error ? '-' : `${result.confidence}%`}
                             </td>
-                            <td style={{ padding: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
+                            <td data-label="DETAILS" style={{ padding: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
                               {result.error ? result.error : result.explanations?.[0] || 'No details'}
                             </td>
                           </tr>
