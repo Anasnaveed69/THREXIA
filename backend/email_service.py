@@ -21,6 +21,9 @@ SMTP_USER     = os.getenv("SMTP_USER", "")          # your Gmail address
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")       # Gmail App Password
 ADMIN_EMAIL   = os.getenv("ADMIN_EMAIL", "buttanas813@gmail.com")
 
+# ── Frontend Base URL ──────────────────────────
+FRONTEND_URL  = os.getenv("FRONTEND_URL", "https://threxia.vercel.app")
+
 
 def _send(to: str, subject: str, html_body: str) -> bool:
     """Low-level send helper. Falls back to console-logging if SMTP not configured."""
@@ -213,7 +216,7 @@ def notify_admin_new_request(
       <p class="content-text">Proceed to the <strong>Access Control</strong> module to authorize or terminate this request. Standard security protocols apply.</p>
       
       <div class="button-wrapper">
-        <a class="action-button" href="https://threxia.vercel.app/admin/access-control">Open Command Center →</a>
+        <a class="action-button" href="{FRONTEND_URL}/admin/access-control">Open Command Center →</a>
       </div>
 
       <p style="font-size:12px;color:#475569;margin-top:24px;text-align:center;">This request was captured via the public registration gateway.</p>
@@ -255,7 +258,7 @@ def notify_user_approved(
       <p class="content-text"><strong>Security Protocol:</strong> This temporary cipher is valid for initial ingestion only. You are required to update your security credentials upon first entry.</p>
       
       <div class="button-wrapper">
-        <a class="action-button" href="https://threxia.vercel.app/login">Initiate Secure Login →</a>
+        <a class="action-button" href="{FRONTEND_URL}/login">Initiate Secure Login →</a>
       </div>
 
       <p style="font-size:13px;color:#475569;">
@@ -320,7 +323,7 @@ def notify_admin_password_reset(username: str, email: str) -> bool:
       <p class="content-text">Verify the identity of the operator before authorizing the credential reset in the <strong>Access Control</strong> module.</p>
       
       <div class="button-wrapper">
-        <a class="action-button" href="https://threxia.vercel.app/admin/access-control">Manage Reset Request →</a>
+        <a class="action-button" href="{FRONTEND_URL}/admin/access-control">Manage Reset Request →</a>
       </div>
     """
     return _send(ADMIN_EMAIL, f"[THREXIA] Reset Request: {username}", _base_template(content))
@@ -356,7 +359,7 @@ def notify_admin_contact_query(name: str, email: str, subject: str, message: str
       </div>
 
       <p>Log in as a <span class="highlight">System Administrator</span> to respond to this inquiry.</p>
-      <a class="cta-btn" href="http://localhost:5173">Go to THREXIA Dashboard →</a>
+      <a class="cta-btn" href="{FRONTEND_URL}">Go to THREXIA Dashboard →</a>
 
       <p style="font-size:13px;color:#475569;">This is an automated notification from the THREXIA contact form.</p>
     """
@@ -379,7 +382,7 @@ def notify_user_password_reset_fulfilled(email: str, temp_pass: str) -> bool:
       <p class="content-text"><strong>Security Notice:</strong> Access the platform immediately and update your credentials via the <strong>Security Settings</strong> node to maintain account integrity.</p>
       
       <div class="button-wrapper">
-        <a class="action-button" href="https://threxia.vercel.app/login">Access Terminal →</a>
+        <a class="action-button" href="{FRONTEND_URL}/login">Access Terminal →</a>
       </div>
     """
     return _send(email, "[THREXIA] Your Password has been Reset", _base_template(content))

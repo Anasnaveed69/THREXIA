@@ -6,6 +6,8 @@
 ### AI-Powered Insider Threat Intelligence & Security Operations Center
 *Detecting anomalous behavior before it becomes a breach.*
 
+[**Live Production Deployment**](https://threxia.vercel.app/)
+
 [![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Framework-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=flat-square&logo=mongodb&logoColor=white)](https://www.mongodb.com/atlas)
@@ -23,9 +25,11 @@
 - [🏗️ System Architecture](#-system-architecture)
 - [🛠️ Tech Stack](#-tech-stack)
 - [🤖 Machine Learning Core](#-machine-learning-core)
+- [🔐 Administrative Workflow](#-administrative-workflow)
 - [📁 Project Structure](#-project-structure)
-- [🚀 Quick Start](#-quick-start)
-- [🌐 Production Deployment](#-production-deployment)
+- [⚙️ Configuration](#-configuration)
+- [🚀 Getting Started](#-getting-started)
+- [🌐 Deployment](#-deployment)
 - [👨‍💻 Team](#-team)
 
 ---
@@ -34,7 +38,7 @@
 
 **THREXIA** is an end-to-end AI-powered threat intelligence platform built to detect insider threats and anomalous user behavior within organizational system logs. It combines unsupervised machine learning (Isolation Forest) with a high-fidelity, role-based security dashboard.
 
-Unlike traditional rule-based systems, THREXIA uses behavioral biometrics to identify subtle deviations in employee activity—such as off-hours data access, unusual device usage, or increased document printing—flagging them as potential security risks before data exfiltration occurs.
+Unlike traditional rule-based systems, THREXIA uses behavioral analytics to identify subtle deviations in operator activity—such as off-hours data access, unusual device usage, or increased document printing—flagging them as potential security risks before data exfiltration occurs.
 
 ---
 
@@ -43,12 +47,12 @@ Unlike traditional rule-based systems, THREXIA uses behavioral biometrics to ide
 | Feature | Description |
 |---|---|
 | 🛡️ **AI-Driven Detection** | Uses Isolation Forest ML models to flag anomalies with high confidence. |
-| 💾 **Persistent Logging** | Integrated with **MongoDB Atlas** for permanent storage of telemetry and audit data. |
-| 🕵️ **Analyst Command Center** | Real-time feed for Security Analysts to investigate, resolve, or escalate threats. |
-| 📊 **Executive Intelligence** | High-level reporting for IT Managers with neutralization rates and integrity scores. |
-| 🔐 **Advanced Security** | JWT-based session management, RBAC, and Bcrypt password hashing. |
+| 📊 **Executive Intelligence** | Automated reporting with neutralization rates, integrity scores, and peak threat hours. |
+| 🕵️ **Analyst Command Center** | Real-time telemetry feed for analysts to investigate, resolve, or escalate threats. |
+| 💾 **Persistent Logging** | Integrated with **MongoDB Atlas** for secure storage of telemetry and audit data. |
+| 🔐 **RBAC & Approval System** | Tiered access levels (Analyst, Manager, Admin) with a multi-stage registration flow. |
+| 📧 **SMTP Notifications** | Automated email alerts for access requests, approvals, and security resets. |
 | 🎨 **Futuristic UI** | Glassmorphic, responsive interface built for modern Security Operation Centers (SOC). |
-| 🔄 **State Persistence** | Analyst actions (Resolve/Escalate) are saved to the database and persist across sessions. |
 
 ---
 
@@ -66,13 +70,24 @@ graph TD
 
 ---
 
+## 🔐 Administrative Workflow
+
+THREXIA implements a secure ingestion protocol for all platform operators:
+
+1.  **Access Request**: New users submit a registration request with a justification (Reason for Access).
+2.  **Pending State**: Accounts are created in a `pending` state with zero platform access.
+3.  **Admin Clearance**: A System Administrator receives an email notification and reviews the request in the **Access Control** module.
+4.  **Verification**: Upon approval, the user receives a secure temporary passcode via email to initiate their first session.
+
+---
+
 ## 🛠️ Tech Stack
 
 ### Backend & AI
 - **FastAPI**: High-performance Python web framework.
 - **Scikit-Learn**: Powering the Isolation Forest anomaly detection.
 - **Joblib**: For serialized ML model serving.
-- **MongoDB Atlas**: Cloud-native document storage for persistent telemetry.
+- **MongoDB Atlas**: Cloud-native document storage.
 
 ### Frontend
 - **React 19**: Modern component-based architecture.
@@ -86,9 +101,9 @@ graph TD
 
 THREXIA utilizes an **Isolation Forest** algorithm trained on the *Corporate Insider Threat Dataset*. 
 
-- **Input Dimensions**: 14 features (e.g., printed_off_hours, usb_transfer, hostility_index).
+- **Input Dimensions**: 14 features (e.g., `printed_off_hours`, `usb_transfer`, `hostility_index`).
 - **Inference**: The model calculates an anomaly score for every system log.
-- **Explainability**: The system interprets model outputs into human-readable warnings (e.g., "Abnormal off-hours data extraction detected").
+- **Explainability**: The system interprets model outputs into human-readable warnings (e.g., *"Abnormal off-hours data extraction detected"*).
 
 ---
 
@@ -96,59 +111,56 @@ THREXIA utilizes an **Isolation Forest** algorithm trained on the *Corporate Ins
 
 ```bash
 THREXIA/
+├── backend/                # FastAPI Application
+│   ├── models/             # Serialized ML Models (.joblib)
+│   ├── database.py         # MongoDB Connection & Logic
+│   ├── email_service.py    # SMTP Notification Engine
+│   └── main.py             # API Routes & Logic
+├── frontend/               # React + Vite Application
+│   ├── src/
+│   │   ├── components/     # Reusable UI Modules
+│   │   ├── pages/          # Dashboard & Auth Views
+│   │   └── apiConfig.js    # Global API Configuration
+├── machine_learning/       # Research & Model Training
+│   ├── model.ipynb         # Training Notebook
+│   └── extracted_model.py  # Model Logic Extraction
+└── requirements.txt        # Backend Dependencies
+```
+
+---
+
+## ⚙️ Configuration
+
+To run THREXIA, configure the following environment variables in `backend/.env`:
+
+| Variable | Description |
+|---|---|
+| `MONGO_URI` | MongoDB Atlas Connection String |
+| `MONGO_DB_NAME` | Database Name (default: `Cluster0`) |
+| `SECRET_KEY` | JWT Signing Secret |
+| `SMTP_USER` | Gmail Address for notifications |
+| `SMTP_PASSWORD` | Gmail App Password |
+| `ADMIN_EMAIL` | Target email for admin alerts |
+| `FRONTEND_URL` | Base URL of the deployed frontend |
+
 ---
 
 ## 🚀 Getting Started
 
-### Prerequisites
-
-- Python 3.9 or higher
-- pip package manager
-- A Kaggle account (for dataset download)
-
-### 1. Clone the Repository
-
+### 1. Clone & Install
 ```bash
 git clone https://github.com/Anasnaveed69/THREXIA.git
 cd THREXIA
-```
-
-### 2. Install Dependencies
-
-```bash
-pip install pandas numpy scikit-learn matplotlib seaborn joblib imbalanced-learn kagglehub
-```
-
-Or install all at once:
-
-```bash
 pip install -r requirements.txt
 ```
 
-### 3. Configure Kaggle API
-
-```bash
-# Place your kaggle.json credentials in:
-~/.kaggle/kaggle.json
-
-# Or authenticate via kagglehub in the notebook:
-import kagglehub
-kagglehub.login()
-```
-
-### 4. Running the Project
-
-#### Start Backend
+### 2. Run Backend
 ```bash
 cd backend
-# Create virtual environment (optional)
-python -m venv venv
-source venv/bin/activate # or venv\Scripts\activate on Windows
-pip install -r requirements.txt
 python main.py
 ```
 
-#### Start Frontend
+### 3. Run Frontend
 ```bash
 cd frontend
 npm install
@@ -159,38 +171,10 @@ npm run dev
 
 ## 🌐 Deployment
 
-The trained model artifacts are consumed by a **FastAPI** backend.
-
-```python
-# Example: Loading saved model for prediction in backend/main.py
-import joblib
-
-model  = joblib.load("models/threxia_model.joblib")
-scaler = joblib.load("models/threxia_scaler.joblib")
-
-# Prediction logic
-scaled_input = scaler.transform(raw_features)
-prediction = model.predict(scaled_input) # -1 = threat, 1 = normal
-```
-
-### Production Deployment (Northflank)
-
-For a fast, always-on backend without cold starts, we recommend **Northflank**:
-
-1.  **Create Service**: Select "Service" -> "Combined Service" on Northflank.
-2.  **Source**: Connect your GitHub repository.
-3.  **Build Settings**:
-    *   **Build Type**: Dockerfile
-    *   **Context**: `backend/`
-    *   **Dockerfile Path**: `Dockerfile`
-4.  **Environment Variables**: Add your `MONGO_URI`, `SECRET_KEY`, etc.
-5.  **Networking**: Set port to `8000`.
-
-**Planned future extensions:**
-- Real-time log streaming via WebSockets
-- Integration with live enterprise environments
-- Advanced deep learning models (Autoencoders, LSTMs)
-- SIEM/UEBA platform integration hooks
+### Production Stack
+- **Frontend**: Deployed on [Vercel](https://threxia.vercel.app/)
+- **Backend**: Containerized via Docker and deployed on Northflank/Render.
+- **Database**: Managed MongoDB Atlas Cluster.
 
 ---
 
@@ -201,19 +185,10 @@ For a fast, always-on backend without cold starts, we recommend **Northflank**:
 
 | Name | Roll Number |
 |---|---|
-| Anas Naveed Butt | 23L-0764 |
-| Muhammad Usman Saboor | 23L-0813 |
-| Ibrahim Rashid | 23L-0741 |
-| Mohib Ali Khattak | 23L-0763 |
-
----
-
-## 🙏 Acknowledgements
-
-- **CERT Division, Carnegie Mellon University** — for the CERT Insider Threat Test Dataset
-- **Ahmed Uzaki (Kaggle)** — for the Corporate Insider Threat Dataset
-- **FAST-NU, Lahore** — Department of Computer Science, for academic guidance and support
-- Course instructors for **Artificial Intelligence**, **Software Engineering**, and **Human-Computer Interaction**
+| **Anas Naveed Butt** | 23L-0764 |
+| **Muhammad Usman Saboor** | 23L-0813 |
+| **Ibrahim Rashid** | 23L-0741 |
+| **Mohib Ali Khattak** | 23L-0763 |
 
 ---
 
