@@ -12,6 +12,9 @@ export default function Login() {
   const [error,     setError]     = useState('');
   const [errorType, setErrorType] = useState(''); // '' | 'pending' | 'rejected' | 'invalid'
 
+  const searchParams = new URLSearchParams(window.location.search);
+  const disableBg = searchParams.get('perf') === 'low';
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
@@ -55,15 +58,17 @@ export default function Login() {
     <div className="login-bg" style={{ position: 'relative', overflow: 'hidden' }}>
       {/* Prismatic Burst Background */}
       <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
-        <PrismaticBurst
-          intensity={1.2}
-          speed={0.15}
-          animationType="rotate3d"
-          colors={['#8B5CF6', '#3B82F6', '#1E1B4B', '#0F172A', '#05050A']}
-          distort={0.15}
-          rayCount={0}
-          mixBlendMode="lighten"
-        />
+        {!disableBg && (
+          <PrismaticBurst
+            intensity={1.2}
+            speed={0.15}
+            animationType="rotate3d"
+            colors={['#8B5CF6', '#3B82F6', '#1E1B4B', '#0F172A', '#05050A']}
+            distort={0.15}
+            rayCount={0}
+            mixBlendMode="lighten"
+          />
+        )}
       </div>
 
       <div className="login-box" style={{ position: 'relative', zIndex: 10 }}>

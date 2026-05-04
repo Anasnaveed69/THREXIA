@@ -178,6 +178,30 @@ npm run dev
 
 ---
 
+## 🧪 Software Testing & Automated Demo
+
+THREXIA implements a comprehensive automated End-to-End (E2E) testing suite to ensure platform integrity and model accuracy.
+
+### Automated Tool: Playwright
+We have selected **Playwright** as our primary testing tool due to its advanced visual debugging, cross-browser support, and "Time Travel" trace viewing capabilities, which are ideal for SOC environment validation.
+
+- **Functional Testing**: Validates the full Authentication flow (Login/Register), Permission-based routing, and Session persistence.
+- **Integration Testing**: Verifies real-time synchronization between the **React Frontend**, **FastAPI Backend**, and **MongoDB Atlas** cluster.
+- **User Acceptance (UAT)**: Simulates real-world security analyst scenarios, such as manual threat classification and intelligence report generation.
+
+### Running the Live Demo
+To perform a live automated demonstration of the system's key functionalities:
+
+1. **Prerequisites**: Ensure both Backend and Frontend are running locally.
+2. **Launch UI Mode**:
+   ```bash
+   cd frontend
+   npx playwright test --ui
+   ```
+3. **Visual Validation**: The UI mode provides a side-by-side view of the test code and the browser actions, allowing evaluators to see the platform being stressed in real-time.
+
+---
+
 ## 👨‍💻 Team
 
 **BCS-6D | Department of Computer Science**

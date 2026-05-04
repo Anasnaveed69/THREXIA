@@ -248,11 +248,17 @@ export default function Analyze() {
 
                   <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
                     <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>BEHAVIORAL ANALYSIS:</div>
-                    {result.explanations.map((exp, idx) => (
-                      <div key={idx} style={{ padding: '0.75rem', background: 'rgba(255,255,255,0.02)', borderLeft: `3px solid ${result.prediction === "Threat" ? 'var(--danger-red)' : 'var(--primary-blue)'}`, fontSize: '0.85rem', marginBottom: '0.5rem' }}>
-                        {exp}
+                    {Array.isArray(result.explanations) ? (
+                      result.explanations.map((exp, idx) => (
+                        <div key={idx} style={{ padding: '0.75rem', background: 'rgba(255,255,255,0.02)', borderLeft: `3px solid ${result.prediction === "Threat" ? 'var(--danger-red)' : 'var(--primary-blue)'}`, fontSize: '0.85rem', marginBottom: '0.5rem' }}>
+                          {exp}
+                        </div>
+                      ))
+                    ) : (
+                      <div style={{ padding: '0.75rem', background: 'rgba(255,255,255,0.02)', borderLeft: `3px solid var(--danger-red)`, fontSize: '0.85rem' }}>
+                        {typeof result.explanations === 'object' ? JSON.stringify(result.explanations) : result.explanations}
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
               )}

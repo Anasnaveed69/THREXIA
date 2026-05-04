@@ -31,7 +31,7 @@ function PrivateRoute({ children, requiredPermission }) {
   const isAuth = !!localStorage.getItem('threxia_auth');
   const access = safeParse('threxia_access');
   
-  if (!isAuth) return <Navigate to="/login" />;
+  if (!isAuth) return <Navigate to={`/login${window.location.search}`} />;
   
   if (requiredPermission && !access.includes(requiredPermission)) {
     // Redirect to the first available authorized page or home
